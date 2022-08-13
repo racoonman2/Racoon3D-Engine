@@ -110,6 +110,10 @@ public class RenderSystem {
 		getService().free(resource);
 	}
 	
+	public static void poll() {
+		getService().poll();
+	}
+	
 	public static void close() {
 		try {
 			getService().close();

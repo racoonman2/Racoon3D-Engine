@@ -64,13 +64,13 @@ public abstract class EventLoop implements Executor, IExecutable {
 		this.queue.add(task);
 	}
 	
-	public <T> CompletableFuture<T> doAsync(Supplier<T> task) {
+	public <T> CompletableFuture<T> enqueue(Supplier<T> task) {
 		CompletableFuture<T> future = CompletableFuture.supplyAsync(task, this.asyncExecutor);
 		this.futures.add(future);
 		return future;
 	}
 	
-	public CompletableFuture<Void> doAsync(Runnable task) {
+	public CompletableFuture<Void> enqueue(Runnable task) {
 		CompletableFuture<Void> future = CompletableFuture.runAsync(task, this.asyncExecutor);
 		this.futures.add(future);
 		return future;

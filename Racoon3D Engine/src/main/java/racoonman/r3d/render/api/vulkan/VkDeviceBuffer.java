@@ -66,6 +66,11 @@ class VkDeviceBuffer implements IDeviceBuffer {
 	}
 
 	@Override
+	public boolean isMapped() {
+		return this.allocation.isMapped();
+	}
+
+	@Override
 	public long size() {
 		return this.size;
 	}

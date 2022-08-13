@@ -6,7 +6,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_RAW_MOUSE_MOTION;
 import static org.lwjgl.glfw.GLFW.GLFW_STICKY_KEYS;
 import static org.lwjgl.glfw.GLFW.GLFW_STICKY_MOUSE_BUTTONS;
 
-public enum Mode implements IGLFWType {
+public enum InputMode implements IGLFWType {
 	CURSOR(GLFW_CURSOR),
 	STICKY_KEYS(GLFW_STICKY_KEYS),
 	STICKY_MOUSE_BUTTONS(GLFW_STICKY_MOUSE_BUTTONS),
@@ -15,12 +15,12 @@ public enum Mode implements IGLFWType {
 
 	private int glfwType;
 
-	private Mode(int glfwType) {
+	private InputMode(int glfwType) {
 		this.glfwType = glfwType;
 	}
 
 	@Override
-	public int asInt() {
+	public int getGLFWType() {
 		return this.glfwType;
 	}
 }

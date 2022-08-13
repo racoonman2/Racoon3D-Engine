@@ -2,24 +2,55 @@ package racoonman.r3d.render.api.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VK13;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkViewport;
 
 import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.api.objects.IAttachment;
+import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IFramebuffer;
+import racoonman.r3d.render.api.vulkan.CommandBuffer.VertexBuffer;
 import racoonman.r3d.render.api.vulkan.FrameManager.Frame;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.AssemblyInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.BlendAttachmentInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.BlendStateInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.DepthStencilInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.DynamicStateInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.MultisampleInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.RasterizationInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.RenderingInfo;
+import racoonman.r3d.render.api.vulkan.GraphicsPipeline.ViewportInfo;
 import racoonman.r3d.render.api.vulkan.sync.Semaphore;
+import racoonman.r3d.render.api.vulkan.types.BlendFactor;
+import racoonman.r3d.render.api.vulkan.types.BlendOp;
+import racoonman.r3d.render.api.vulkan.types.ColorComponent;
+import racoonman.r3d.render.api.vulkan.types.CompareOp;
+import racoonman.r3d.render.api.vulkan.types.Format;
+import racoonman.r3d.render.api.vulkan.types.FrontFace;
+import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.api.vulkan.types.IndexType;
+import racoonman.r3d.render.api.vulkan.types.LogicOp;
 import racoonman.r3d.render.api.vulkan.types.PipelineStage;
+import racoonman.r3d.render.api.vulkan.types.PolygonMode;
+import racoonman.r3d.render.api.vulkan.types.SampleCount;
+import racoonman.r3d.render.api.vulkan.types.Topology;
+import racoonman.r3d.render.vertex.VertexFormat;
+import racoonman.r3d.util.IPair;
 
 //TODO remember to make this class package only and make applyState() private
 public class VkRenderContext extends RenderContext {
+	private Device device;
 	private WorkDispatcher dispatcher;
 	private Frame frame;
 	private CommandRecorder recorder;
@@ -27,13 +58,16 @@ public class VkRenderContext extends RenderContext {
 	private boolean inPass;
 	private Map<PipelineStage, Set<Semaphore>> waits;
 	private Set<Semaphore> signals;
+	private State<IPipeline> pipeline;
 	
-	public VkRenderContext(WorkDispatcher dispatcher, Frame frame) {
+	public VkRenderContext(Device device, WorkDispatcher dispatcher, Frame frame) {
+		this.device = device;
 		this.dispatcher = dispatcher;
 		this.frame = frame;
 		this.recorder = new CommandRecorder(this);
 		this.waits = new HashMap<>();
 		this.signals = new HashSet<>();
+		this.pipeline = new State<>();
 	}
 
 	@Override
@@ -64,11 +98,7 @@ public class VkRenderContext extends RenderContext {
 
 	@Override
 	public void submit() {
-		//No pass was started, framebuffer still needs to be cleared
-		if(this.activePass == null) {
-			this.applyState();
-		}
-		
+		this.applyState();
 		this.maybeEndPass();
 		
 		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
@@ -147,7 +177,56 @@ public class VkRenderContext extends RenderContext {
 		this.framebuffer.check("framebuffer");
 		this.framebuffer.applyChanges(this::maybeBeginPass);
 		
-		//	check("vertex buffer", this.vertexBuffers);
+		this.vertexBuffers.applyChanges((buffers) -> {
+			this.recorder.record((cmdBuffer) -> {
+				List<VertexBuffer> vertexBuffers = new ArrayList<>();
+				
+				for(IPair<VertexFormat, IDeviceBuffer> pair : buffers) {
+					vertexBuffers.add(new VertexBuffer(pair.right(), 0));
+				}
+				
+				cmdBuffer.bindVertexBuffers(0, vertexBuffers.toArray(VertexBuffer[]::new));
+			});
+		});
 		
+		this.indexBuffer.applyChanges((buffer) -> {
+			this.recorder.record((cmdBuffer) -> {
+				cmdBuffer.bindIndexBuffer(buffer, 0, IndexType.UINT32);
+			});
+		});
+
+		this.pipeline.set(this.getPipelineFromState());
+		this.pipeline.applyChanges((pipeline) -> {
+			this.recorder.record((cmdBuffer) -> {
+				cmdBuffer.bindPipeline(pipeline);
+			});
+		});
+	}
+	
+	private IPipeline getPipelineFromState() {
+		return new GraphicsPipeline(this.device, 
+			this.getProgram(), 
+			new VertexInfo(this.vertexBuffers.getValues().stream().map(IPair::left).toArray(VertexFormat[]::new)),
+			new AssemblyInfo(Topology.TRIANGLE_LIST),
+			new ViewportInfo(1, 1),
+			new RasterizationInfo(PolygonMode.FILL, this.getCullMode(), this.getLineWidth(), FrontFace.CW), 
+			new MultisampleInfo(SampleCount.COUNT_1), 
+			new BlendStateInfo[] {
+				new BlendStateInfo(
+					IVkType.bitMask(ColorComponent.values()), 
+					false, 
+					BlendOp.ADD, 
+					BlendFactor.ONE_MINUS_SRC_COLOR, 
+					BlendFactor.ONE_MINUS_DST_COLOR, 
+					BlendOp.ADD, 
+					BlendFactor.ONE_MINUS_SRC_ALPHA, 
+					BlendFactor.ONE_MINUS_DST_ALPHA)
+			}, 
+			new BlendAttachmentInfo(false, LogicOp.AND, new float[0]),
+			new DynamicStateInfo(new int[] {VK13.VK_DYNAMIC_STATE_VIEWPORT, VK13.VK_DYNAMIC_STATE_SCISSOR}),
+			Optional.of(new DepthStencilInfo(false, false, CompareOp.NEVER, false, false)),
+			Optional.empty(), 
+			new RenderingInfo(this.framebuffer.getValue().getColorAttachments().stream().map(IAttachment::getFormat).toArray(Format[]::new), Format.D32_SFLOAT_S8_UINT, Format.D32_SFLOAT_S8_UINT), 
+			new PipelineLayout(this.device));
 	}
 }

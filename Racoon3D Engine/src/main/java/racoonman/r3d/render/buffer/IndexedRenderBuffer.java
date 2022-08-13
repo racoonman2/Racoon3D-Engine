@@ -18,12 +18,15 @@ public class IndexedRenderBuffer extends RenderBufferImpl {
 	
 	@Override
 	public void draw(RenderContext context, int instanceCount) {
+		this.bind(context);
 		context.drawIndexed(instanceCount, 0, 0, this.indexCount);
 	}
 
 	@Override
 	public void bind(RenderContext context) {
+		super.bind(context);
 		
+		context.bindIndexBuffer(this.indexBuffer);
 	}
 
 	@Override
@@ -36,7 +39,7 @@ public class IndexedRenderBuffer extends RenderBufferImpl {
 			}
 			
 			this.indexCount = buffer.elements();
-			ByteBuffer data = buffer.data().rewind();
+			ByteBuffer data = buffer.data();
 			
 			this.indexBuffer = UploadUtil.upload(data, BufferUsage.INDEX_BUFFER, BufferUsage.TRANSFER_DST);
 		});

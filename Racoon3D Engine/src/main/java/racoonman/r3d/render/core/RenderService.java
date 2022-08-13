@@ -42,7 +42,6 @@ public abstract class RenderService implements AutoCloseable {
 	}
 
 	public RenderContext begin() {
-		this.poll(); //TODO move to submit instead
 		return this.createContext();
 	}
 	
@@ -68,7 +67,7 @@ public abstract class RenderService implements AutoCloseable {
 	
 	protected abstract RenderContext createContext();
 	
-	protected final void poll() {
+	public final void poll() {
 		this.pollInternal();
 
 		this.beginCount++;

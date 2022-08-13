@@ -8,10 +8,10 @@ import java.util.function.Function;
 
 import org.lwjgl.system.MemoryStack;
 
-import racoonman.r3d.render.api.vulkan.CommandBuffer.Level;
-import racoonman.r3d.render.api.vulkan.CommandBuffer.SubmitMode;
 import racoonman.r3d.render.api.vulkan.sync.VkFence;
+import racoonman.r3d.render.api.vulkan.types.Level;
 import racoonman.r3d.render.api.vulkan.types.QueueFamily;
+import racoonman.r3d.render.api.vulkan.types.SubmitMode;
 
 class WorkDispatcher {
 	private Device device;

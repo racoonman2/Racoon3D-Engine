@@ -1,9 +1,13 @@
 package racoonman.r3d.render.api.vulkan;
 
+import static org.lwjgl.system.MemoryStack.stackPush;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.NativeResource;
+import org.lwjgl.vulkan.VkBufferCopy;
 
 import racoonman.r3d.render.RenderContext;
 import racoonman.r3d.render.api.objects.IAttachment;
@@ -52,13 +56,13 @@ class VkRenderService extends RenderService {
 
 	@Override
 	public RenderContext createContext() {
-		return new VkRenderContext(this.graphicsDispatch, this.frameManager.take());
+		return new VkRenderContext(this.device, this.graphicsDispatch, this.frameManager.take());
 	}
 
 	@Override
 	public IShader createShader(ShaderStage stage, String entry, String file, String... args) {
 		Result result = this.shaderLoader.compileShader(file, entry, stage, args);
-		IShader shader = new VkShader(this.device, stage, file, result.getData());
+		IShader shader = new VkShader(this.device, stage, entry, result.getData());
 		result.free();
 		return shader;
 	}
@@ -90,7 +94,16 @@ class VkRenderService extends RenderService {
 
 	@Override
 	public void copy(IDeviceBuffer src, IDeviceBuffer dst) {
-		throw new UnsupportedOperationException("TODO");
+		this.graphicsDispatch.runAsync((cmdBuffer) -> {
+			try(MemoryStack stack = stackPush()) {
+				VkBufferCopy.Buffer copy = VkBufferCopy.calloc(1, stack);
+				copy.srcOffset(0L);
+				copy.dstOffset(0L);
+				copy.size(src.size());
+				
+				cmdBuffer.copyBuffer(src, dst, copy);
+			}
+		}).join();
 	}
 
 	@Override

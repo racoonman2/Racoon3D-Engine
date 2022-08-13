@@ -4,6 +4,8 @@ import static org.lwjgl.system.MemoryUtil.memByteBuffer;
 
 import java.nio.ByteBuffer;
 
+import org.lwjgl.system.MemoryUtil;
+
 import racoonman.r3d.render.natives.IHandle;
 
 public class Allocation implements IHandle {
@@ -27,10 +29,14 @@ public class Allocation implements IHandle {
 	}
 	
 	public void unmap() {
-		if (this.pointer != 0L) {
+		if (this.pointer != MemoryUtil.NULL) {
 			this.allocator.unmapMemory(this);
-			this.pointer = 0L;
+			this.pointer = MemoryUtil.NULL;
 		}
+	}
+
+	public boolean isMapped() {
+		return this.pointer != MemoryUtil.NULL;
 	}
 	
 	public void free() {

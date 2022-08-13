@@ -1,12 +1,7 @@
 package racoonman.r3d.render.api.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
-import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 import static org.lwjgl.vulkan.VK10.vkAllocateCommandBuffers;
@@ -47,9 +42,9 @@ import org.lwjgl.vulkan.VkRenderingInfo;
 import org.lwjgl.vulkan.VkViewport;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.vulkan.types.BindPoint;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
 import racoonman.r3d.render.api.vulkan.types.IndexType;
+import racoonman.r3d.render.api.vulkan.types.Level;
+import racoonman.r3d.render.api.vulkan.types.SubmitMode;
 import racoonman.r3d.render.natives.IHandle;
 
 public class CommandBuffer implements IHandle {
@@ -122,8 +117,20 @@ public class CommandBuffer implements IHandle {
 		vkCmdDraw(this.buffer, vertexCount, instanceCount, firstVertex, firstInstance);
 	}
 	
-	public void bindVertexBuffers(int firstBinding, LongBuffer buffers, LongBuffer offsets) {
-		vkCmdBindVertexBuffers(this.buffer, firstBinding, buffers, offsets);
+	public void bindVertexBuffers(int firstBinding, VertexBuffer... buffers) {
+		try(MemoryStack stack = stackPush()) {
+			LongBuffer bindings = stack.mallocLong(buffers.length);
+			LongBuffer offsets = stack.mallocLong(buffers.length);
+			
+			for(int i = 0; i < buffers.length; i++) {
+				VertexBuffer buffer = buffers[i];
+				
+				bindings.put(i, buffer.buffer().asLong());
+				offsets.put(i, buffer.offset());
+			}
+			
+			vkCmdBindVertexBuffers(this.buffer, firstBinding, bindings, offsets);
+		}
 	}
 	
 	public void beginRendering(VkRenderingInfo info) {
@@ -158,40 +165,10 @@ public class CommandBuffer implements IHandle {
 		vkCmdCopyBuffer(this.buffer, src.asLong(), dst.asLong(), copy);
 	}
 	
-	public void bindPipeline(IPipeline pipeline, BindPoint bindPoint) {
-		vkCmdBindPipeline(this.buffer, bindPoint.getVkType(), pipeline.asLong());
+	public void bindPipeline(IPipeline pipeline) {
+		vkCmdBindPipeline(this.buffer, pipeline.getBindPoint().getVkType(), pipeline.asLong());
 	}
 	
-	public static enum Level implements IVkType {
-		PRIMARY(VK_COMMAND_BUFFER_LEVEL_PRIMARY),
-		SECONDARY(VK_COMMAND_BUFFER_LEVEL_SECONDARY);
-		
-		private int vkType;
-		
-		private Level(int vkType) {
-			this.vkType = vkType;
-		}
-		
-		@Override
-		public int getVkType() {
-			return this.vkType;
-		}
-	}
-	
-	public static enum SubmitMode implements IVkType {
-		SINGLE(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT),
-		CONTINUE(VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT),
-		ASYNC(VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT);
-		
-		private int vkType;
-		
-		private SubmitMode(int vkType) {
-			this.vkType = vkType;
-		}
-		
-		@Override
-		public int getVkType() {
-			return this.vkType;
-		}
+	public static record VertexBuffer(IDeviceBuffer buffer, long offset) {		
 	}
 }

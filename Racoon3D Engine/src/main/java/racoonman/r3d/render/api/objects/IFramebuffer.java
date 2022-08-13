@@ -20,9 +20,7 @@ public interface IFramebuffer extends IBindable, IHandle {
 
 	int getHeight();
 
-	boolean acquire();
-	
-	boolean present();
+	boolean next();
 	
 	default IAttachment getColorAttachment(int index) {
 		return this.getColorAttachments().get(index);

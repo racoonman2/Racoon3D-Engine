@@ -223,21 +223,12 @@ public enum Key implements IAction {
 	}
 
 	@Override
-	public int asInt() {
+	public int getGLFWType() {
 		return this.glfwType;
 	}
 
 	@Override
 	public Status getStatus(Window window) {
 		return window.getKey(this);
-	}
-
-	public static Key lookup(int action) {
-		for (Key input : Key.values()) {
-			if (input.asInt() == action) {
-				return input;
-			}
-		}
-		return null;
 	}
 }

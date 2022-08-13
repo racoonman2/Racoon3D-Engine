@@ -27,16 +27,14 @@ class VkWindowFramebuffer extends VkFramebuffer {
 		}
 	}
 	
-	@Override
+	public boolean next() {
+		return this.swapchain.acquire(this.frames[this.getIndex()].getAvailable());
+	}
+
 	public boolean present() {
 		return this.swapchain.present(this.frames[this.getIndex()].getFinished(), this.queue);
 	}
 	
-	@Override
-	public boolean acquire() {
-		return this.swapchain.acquire(this.frames[this.getIndex()].getAvailable());
-	}
-
 	@Override
 	public void free() {
 		for(VkFrame frame : this.frames) {

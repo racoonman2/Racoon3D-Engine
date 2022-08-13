@@ -3,7 +3,7 @@ package racoonman.r3d.window;
 import java.util.Collection;
 
 public interface IGLFWType {
-	int asInt();
+	int getGLFWType();
 	
 	public static int none() {
 		return 0;
@@ -11,7 +11,7 @@ public interface IGLFWType {
 
 	public static <T extends IGLFWType> T byInt(int type, T[] values) {
 		for(T t : values) {
-			if(t.asInt() == type) {
+			if(t.getGLFWType() == type) {
 				return t;
 			}
 		}
@@ -23,7 +23,7 @@ public interface IGLFWType {
 		int[] ints = new int[types.length];
 
 		for (int i = 0; i < ints.length; i++) {
-			ints[i] = types[i].asInt();
+			ints[i] = types[i].getGLFWType();
 		}
 
 		return ints;
@@ -33,7 +33,7 @@ public interface IGLFWType {
 		int mask = 0;
 
 		for (IGLFWType type : types) {
-			mask |= type.asInt();
+			mask |= type.getGLFWType();
 		}
 
 		return mask;
@@ -43,7 +43,7 @@ public interface IGLFWType {
 		int mask = 0;
 
 		for (IGLFWType type : types) {
-			mask |= type.asInt();
+			mask |= type.getGLFWType();
 		}
 
 		return mask;
@@ -51,7 +51,7 @@ public interface IGLFWType {
 
 	public static <T extends IGLFWType> T fromBitMask(int bitMask, T[] values, T fallback) {
 		for (T t : values) {
-			int type = t.asInt();
+			int type = t.getGLFWType();
 
 			if ((bitMask & type) == type) {
 				return t;

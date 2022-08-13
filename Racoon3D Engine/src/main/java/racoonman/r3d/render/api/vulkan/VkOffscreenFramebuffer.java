@@ -16,13 +16,8 @@ class VkOffscreenFramebuffer extends VkFramebuffer {
 	}
 
 	@Override
-	public boolean acquire() {
+	public boolean next() {
 		this.index %= this.frames.length;
-		return false;
-	}
-
-	@Override
-	public boolean present() {
 		return false;
 	}
 

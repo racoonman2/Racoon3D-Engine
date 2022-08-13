@@ -57,8 +57,6 @@ public class ShaderCompiler implements IHandle {
 			});
 		});
 
-		System.out.println(this.transformer.transform(processedCode));
-
 		Result result = new Result(shaderc_compile_into_spv(this.handle, this.transformer.transform(processedCode), stage.getShadercType(), name, entryPoint, this.options.asLong()));
 		
 		CompilationStatus status = result.getCompilationStatus();

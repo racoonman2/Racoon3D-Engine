@@ -12,10 +12,9 @@ class UploadUtil {
 		ByteBuffer bytes = buffer.rewind();
 		IDeviceBuffer gpuBuffer = RenderSystem.allocate(bytes.limit(), usage);
 
-		try(IDeviceBuffer region = RenderSystem.map(bytes.limit())) {
-			region.asByteBuffer().put(bytes);
-			gpuBuffer.copy(region);
-		}
+		IDeviceBuffer region = RenderSystem.allocate(bytes.limit(), BufferUsage.TRANSFER_SRC);
+		region.asByteBuffer().put(bytes);
+		gpuBuffer.copy(region);
 		
 		return gpuBuffer;
 	}

@@ -32,7 +32,7 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 	protected State<Scissor> scissor;
 	protected State<IFramebuffer> framebuffer;
 	protected Vector4f clear;
-	protected List<IPair<VertexFormat, IDeviceBuffer>> vertexBuffers;
+	protected ListState<IPair<VertexFormat, IDeviceBuffer>> vertexBuffers;
 	protected State<IDeviceBuffer> indexBuffer;
 	
 	public RenderContext() {
@@ -44,7 +44,7 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 		this.scissor = new State<>(Scissor.of(0, 0, 0, 0));
 		this.framebuffer = new State<>();
 		this.clear = new Vector4f();
-		this.vertexBuffers = new ArrayList<>();
+		this.vertexBuffers = new ListState<>();
 		this.indexBuffer = new State<>();
 	}
 	
@@ -112,6 +112,14 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 		this.clear.set(r, g, b, a);
 	}
 	
+	public void bindVertexBuffers(List<IPair<VertexFormat, IDeviceBuffer>> buffers) {
+		this.vertexBuffers.set(buffers);
+	}
+	
+	public void bindIndexBuffer(IDeviceBuffer indexBuffer) {
+		this.indexBuffer.set(indexBuffer);
+	}
+	
 	public abstract void draw(int instanceCount, int start, int amount);
 
 	public abstract void drawIndexed(int instanceCount, int vertexStart, int indexStart, int amount);
@@ -121,6 +129,47 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 	@Override
 	public void close() {
 		this.submit();
+	}
+	
+	public static class ListState<T> {
+		private List<T> values;
+		private boolean updated;
+		
+		public ListState() {
+			this.values = new ArrayList<>();
+		}
+		
+		public void set(List<T> values) {
+			if(!this.values.equals(values)) {
+				this.values.clear();
+				this.values.addAll(values);
+				this.updated = true;
+			}
+		}
+		
+		public List<T> getValues() {
+			return this.values;
+		}
+		
+		public void applyChanges(Consumer<List<T>> consumer) {
+			if(this.updated) {
+				if(!this.values.isEmpty()) {
+					consumer.accept(this.values);
+				}
+				
+				this.updated = false;
+			}
+		}
+		
+		public boolean exists() {
+			return this.values.isEmpty();
+		}
+		
+		public void check(String name) {
+			if(!this.exists()) {
+				throw new IllegalStateException("Required state [" + name + "] is not bound");
+			}
+		}
 	}
 	
 	public static class State<T> {
@@ -160,12 +209,6 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 			if(!this.exists()) {
 				throw new IllegalStateException("Required state [" + name + "] is not bound");
 			}
-		}
-	}
-	
-	protected static void check(String name, List<?> list) {
-		if(list.isEmpty()) {
-			throw new IllegalStateException("Required state [" + name + "] is not bound");
 		}
 	}
 }

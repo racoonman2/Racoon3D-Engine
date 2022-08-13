@@ -23,25 +23,25 @@ public abstract class InputListener<T extends IAction> {
 		
 		window.onKeyPress((key, scancode, action, mods) -> {
 			for(CallbackHolder callbackHolder : this.pressCallbacks.values()) {
-				if(callbackHolder.getAction().asInt() == key && callbackHolder.isPressed(callbackHolder.getModifiers())) {
+				if(callbackHolder.getAction().getGLFWType() == key && callbackHolder.isPressed(callbackHolder.getModifiers())) {
 					callbackHolder.getCallback().invoke();
 				}
 			}
 		}).onMousePress((button, action, mods) -> {
 			for(CallbackHolder callbackHolder : this.pressCallbacks.values()) {
-				if(callbackHolder.getAction().asInt() == button && callbackHolder.isPressed(callbackHolder.getModifiers())) {
+				if(callbackHolder.getAction().getGLFWType() == button && callbackHolder.isPressed(callbackHolder.getModifiers())) {
 					callbackHolder.getCallback().invoke();
 				}
 			}
 		}).onKeyRelease((key, scancode, action, mods) -> {
 			for(CallbackHolder callbackHolder : this.releaseCallbacks.values()) {
-				if(callbackHolder.getAction().asInt() == key && callbackHolder.isPressed(callbackHolder.getModifiers())) {
+				if(callbackHolder.getAction().getGLFWType() == key && callbackHolder.isPressed(callbackHolder.getModifiers())) {
 					callbackHolder.getCallback().invoke();
 				}
 			}
 		}).onMouseRelease((button, action, mods) -> {
 			for(CallbackHolder callbackHolder : this.releaseCallbacks.values()) {
-				if(callbackHolder.getAction().asInt() == button && callbackHolder.isPressed(callbackHolder.getModifiers())) {
+				if(callbackHolder.getAction().getGLFWType() == button && callbackHolder.isPressed(callbackHolder.getModifiers())) {
 					callbackHolder.getCallback().invoke();
 				}
 			}

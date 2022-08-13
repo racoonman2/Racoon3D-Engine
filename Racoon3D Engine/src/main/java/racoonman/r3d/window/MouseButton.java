@@ -34,21 +34,12 @@ public enum MouseButton implements IAction {
 	}
 	
 	@Override
-	public int asInt() {
+	public int getGLFWType() {
 		return this.glfwType;
 	}
 	
 	@Override
 	public Status getStatus(Window window) {
 		return window.getMouseButton(this);
-	}
-	
-	public static MouseButton lookup(int action) {
-		for(MouseButton input : MouseButton.values()) {
-			if(input.asInt() == action) {
-				return input;
-			}
-		}
-		return null;
 	}
 }

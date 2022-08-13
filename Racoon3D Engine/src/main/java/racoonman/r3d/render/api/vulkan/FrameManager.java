@@ -4,10 +4,10 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import racoonman.r3d.render.api.vulkan.CommandBuffer.Level;
-import racoonman.r3d.render.api.vulkan.CommandBuffer.SubmitMode;
 import racoonman.r3d.render.api.vulkan.sync.VkFence;
+import racoonman.r3d.render.api.vulkan.types.Level;
 import racoonman.r3d.render.api.vulkan.types.Status;
+import racoonman.r3d.render.api.vulkan.types.SubmitMode;
 
 class FrameManager {
 	private WorkDispatcher dispatcher;

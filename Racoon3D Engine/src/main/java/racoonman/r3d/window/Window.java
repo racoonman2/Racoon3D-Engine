@@ -1,6 +1,6 @@
 package racoonman.r3d.window;
 
-import static org.lwjgl.glfw.GLFW.GLFW_CLIENT_API;
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.glfw.GLFW.GLFW_DONT_CARE;
 import static org.lwjgl.glfw.GLFW.GLFW_NO_API;
 import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
@@ -248,11 +248,11 @@ public class Window implements IHandle {
 	}
 
 	public Status getMouseButton(MouseButton mouseButton) {
-		return Status.lookup(glfwGetMouseButton(this.handle, mouseButton.asInt()));
+		return Status.lookup(glfwGetMouseButton(this.handle, mouseButton.getGLFWType()));
 	}
 
 	public Status getKey(Key key) {
-		return Status.lookup(glfwGetKey(this.handle, key.asInt()));
+		return Status.lookup(glfwGetKey(this.handle, key.getGLFWType()));
 	}
 
 	public void setCursorPos(double x, double y) {

@@ -12,15 +12,15 @@ public class R3DRuntime {
 		if(activeClient.isEmpty()) {
 			activeClient = Optional.of(client);
 			
-			IExecutable launcher = launch.get();
+			IExecutable exe = launch.get();
 			
-			launcher.run();
-			launcher.close();
+			exe.run();
+			exe.close();
 		} else {
 			throw new IllegalStateException("Client is already running");
 		}
 	}
-
+	
 	public static Client getClient() {
 		return activeClient.orElseThrow(() -> new IllegalStateException("No client has been launched"));
 	}

@@ -12,7 +12,7 @@ public class VkWindowSurface implements IWindowSurface {
 	private WindowSurface surface;
 	private DeviceQueue presentQueue;
 	private SwapChain swapChain;
-	private IFramebuffer target;
+	private VkWindowFramebuffer target;
 	private boolean resized;
 	
 	public VkWindowSurface(Device device, Vulkan vulkan, Window window, int queueIndex) {
@@ -27,7 +27,7 @@ public class VkWindowSurface implements IWindowSurface {
 	@Override
 	public boolean acquire() {
 		boolean resized = false;
-		for(int i = 0; i < this.window.getFrameCount() && this.isValid() && (this.resized || this.target.acquire()); i++) {
+		for(int i = 0; i < this.window.getFrameCount() && this.isValid() && (this.resized || this.target.next()); i++) {
 			this.resize();
 			resized = true;
 			this.resized = false;

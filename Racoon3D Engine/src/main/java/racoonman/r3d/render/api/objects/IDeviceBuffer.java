@@ -10,11 +10,17 @@ public interface IDeviceBuffer extends IHandle {
 
 	void unmap();
 	
+	boolean isMapped();
+	
 	long size();
 	
 	ByteBuffer asByteBuffer(int offset);
 
 	default ByteBuffer asByteBuffer() {
+		if(!this.isMapped()) {
+			this.map();
+		}
+		
 		return this.asByteBuffer(0);
 	}
 	

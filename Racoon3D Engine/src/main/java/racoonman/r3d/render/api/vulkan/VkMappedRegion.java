@@ -65,6 +65,11 @@ public class VkMappedRegion implements IMappedMemoryRegion {
 		}
 
 		@Override
+		public boolean isMapped() {
+			return true;
+		}
+
+		@Override
 		public long size() {
 			return this.size;
 		}
