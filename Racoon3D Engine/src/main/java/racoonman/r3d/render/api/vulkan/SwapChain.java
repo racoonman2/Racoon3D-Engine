@@ -37,29 +37,37 @@ import racoonman.r3d.render.api.vulkan.sync.Semaphore;
 import racoonman.r3d.render.api.vulkan.types.Format;
 import racoonman.r3d.render.api.vulkan.types.IVkType;
 import racoonman.r3d.render.api.vulkan.types.ImageUsage;
-import racoonman.r3d.render.api.vulkan.types.PresentMode;
 import racoonman.r3d.render.api.vulkan.types.SampleCount;
 import racoonman.r3d.render.natives.IHandle;
-import racoonman.r3d.util.IPair;
 import racoonman.r3d.window.Window;
 
 public class SwapChain implements IHandle {
 	private Device device;
+	private Window window;
+	private WindowSurface surface;
+	private int width;
+	private int height;
 	private SurfaceFormat format;
 	private long handle;
 	private ImageView[] frames;
-	private IPair<Semaphore, Semaphore>[] semaphores;
 	private VkExtent2D extent;
 	private volatile int frameIndex;
 	
-	public SwapChain(Device device, Window window, WindowSurface surface, int imgCount, PresentMode presentMode) {
-		this(device, window, surface, imgCount, presentMode, null);
+	public SwapChain(SwapChain old) {
+		this(old.getDevice(), old.getWindow(), old.getSurface(), old.getFrameCount(), old);
 	}
 	
-	@SuppressWarnings("unchecked") 
-	public SwapChain(Device device, Window window, WindowSurface surface, int imgCount, PresentMode presentMode, SwapChain oldSwapchain) {
+	public SwapChain(Device device, Window window, WindowSurface surface, int imgCount) {
+		this(device, window, surface, imgCount, null);
+	}
+ 
+	public SwapChain(Device device, Window window, WindowSurface surface, int imgCount, SwapChain oldSwapchain) {
 		try(MemoryStack stack = stackPush()) {
 			this.device = device;
+			this.window = window;
+			this.surface = surface;
+			this.width = window.getWidth();
+			this.height = window.getHeight();
 			
 			PhysicalDevice physicalDevice = device.getPhysicalDevice();
 			
@@ -83,7 +91,7 @@ public class SwapChain implements IHandle {
 				.preTransform(surfaceCaps.currentTransform())
 				.compositeAlpha(VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
 				.clipped(true)
-				.presentMode(presentMode.getVkType());
+				.presentMode(window.getPresentMode().getVkType());
 			if(oldSwapchain != null) {
 				swapchainInfo.oldSwapchain(oldSwapchain.getHandle());
 			}
@@ -93,25 +101,35 @@ public class SwapChain implements IHandle {
 			this.handle = pointer.get(0);
 			
 			this.frames = this.makeImageViews(stack, device, this.handle, this.format.imageFormat());
-			
-			this.semaphores = new IPair[frameCount];
-			for(int i = 0; i < frameCount; i++) {
-				this.semaphores[i] = IPair.of(new Semaphore(device), new Semaphore(device));
-			}
 		}
+	}
+	
+	public int getWidth() {
+		return this.width;
+	}
+	
+	public int getHeight() {
+		return this.height;
+	}
+	
+	public Window getWindow() {
+		return this.window;
+	}
+	
+	public WindowSurface getSurface() {
+		return this.surface;
 	}
 	
 	public int getFrameCount() {
 		return this.frames.length;
 	}
 	
-	public boolean acquire() {
+	public boolean acquire(Semaphore semaphore) {
 		try(MemoryStack stack = stackPush()) {
 			boolean resize = false;
 			
 			IntBuffer pointer = stack.mallocInt(1);
-			int err = vkAcquireNextImageKHR(this.device.get(), this.handle, ~0L, 
-				this.semaphores[this.frameIndex].left().getHandle(), 0L, pointer);
+			int err = vkAcquireNextImageKHR(this.device.get(), this.handle, ~0L, semaphore.getHandle(), 0L, pointer);
 			if(err == VK_ERROR_OUT_OF_DATE_KHR) {
 				resize = true;
 			} else if(err != VK_SUBOPTIMAL_KHR && err != VK_SUCCESS) {
@@ -124,14 +142,13 @@ public class SwapChain implements IHandle {
 	}
 	
 	//FIXME this method takes absurd amounts of time
-	public boolean present(DeviceQueue queue) {
+	public boolean present(Semaphore semaphore, DeviceQueue queue) {
 		try(MemoryStack stack = stackPush()) {
 			boolean resize = false;
 			
 			VkPresentInfoKHR present = VkPresentInfoKHR.calloc(stack)
 				.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
-				.pWaitSemaphores(stack.longs(
-					this.semaphores[this.frameIndex].right().getHandle()))
+				.pWaitSemaphores(stack.longs(semaphore.getHandle()))
 				.swapchainCount(1)
 				.pSwapchains(stack.longs(this.handle))
 				.pImageIndices(stack.ints(this.frameIndex));
@@ -165,10 +182,6 @@ public class SwapChain implements IHandle {
 	
 	public VkExtent2D getExtent() {
 		return this.extent;
-	}
-	
-	public IPair<Semaphore, Semaphore>[] getSemaphores() {
-		return this.semaphores;
 	}
 	
 	public long getHandle() {

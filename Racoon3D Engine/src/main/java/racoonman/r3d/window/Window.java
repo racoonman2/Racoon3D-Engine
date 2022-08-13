@@ -35,6 +35,7 @@ import org.lwjgl.system.MemoryStack;
 
 import racoonman.r3d.core.libraries.Libraries;
 import racoonman.r3d.render.api.objects.IFramebuffer;
+import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.vulkan.types.PresentMode;
 import racoonman.r3d.render.core.RenderSystem;
 import racoonman.r3d.render.natives.IHandle;
@@ -43,6 +44,7 @@ import racoonman.r3d.util.math.Mathi;
 public class Window implements IHandle {
 	private long handle;
 	private Monitor monitor;
+	private boolean fullscreen;
 	private List<ICloseCallback> closeCallbacks;
 	private List<IWindowResizeCallback> resizeCallbacks;
 	private List<IKeyCallback> keyPressCallbacks;
@@ -61,8 +63,8 @@ public class Window implements IHandle {
 	private Mouse mouse;
 	private Keyboard keyboard;
 	private PresentMode presentMode;
-	private IFramebuffer target;
-
+	private IWindowSurface surface;
+	
 	public Window(int w, int h, CharSequence title, PresentMode presentMode, int frameCount) {
 		this(w, h, title, null, null, presentMode, frameCount);
 	}
@@ -73,6 +75,7 @@ public class Window implements IHandle {
 
 		this.handle = glfwCreateWindow(w, h, title, monitor != null ? monitor.asLong() : 0L, share != null ? share.asLong() : 0L);
 		this.monitor = monitor;
+		this.fullscreen = this.monitor != null;
 
 		this.closeCallbacks = new ArrayList<>();
 		this.resizeCallbacks = new ArrayList<>();
@@ -136,21 +139,29 @@ public class Window implements IHandle {
 		this.frameCount = frameCount;
 		this.presentMode = presentMode;
 
-		this.target = RenderSystem.createFramebuffer(this);
+		this.surface = RenderSystem.createSurface(this);
 	}
 	
-	public void acquire() {
-		this.target.acquire();
+	public boolean acquire() {
+		return this.surface.acquire();
 	}
 	
 	public boolean present() {
-		boolean resized;
-		if(resized = this.target.present()) {
-			this.resize();
-		}
-		return resized;
+		return this.surface.present();
 	}
 
+	public void toggleFullscreen() {
+		if(this.fullscreen) {
+			this.fullscreen = false;
+			
+			this.setMonitor(null);
+		} else {
+			this.fullscreen = true;
+			
+			this.setMonitor(this.getCurrentMonitor());
+		}
+	}
+	
 	public Monitor getMonitor() {
 		return this.monitor;
 	}
@@ -354,12 +365,7 @@ public class Window implements IHandle {
 	}
 	
 	public IFramebuffer getTarget() {
-		return this.target;
-	}
-
-	public void resize() {
-		RenderSystem.free(this.target);
-		this.target = RenderSystem.createFramebuffer(this);
+		return this.surface.getFramebuffer();
 	}
 
 	public static void pollEvents() {

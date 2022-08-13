@@ -10,8 +10,9 @@ import org.joml.Vector4f;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IShaderProgram;
-import racoonman.r3d.render.api.sync.ISync;
+import racoonman.r3d.render.api.vulkan.sync.Semaphore;
 import racoonman.r3d.render.api.vulkan.types.CullMode;
+import racoonman.r3d.render.api.vulkan.types.PipelineStage;
 import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.matrix.IMatrixType;
 import racoonman.r3d.render.matrix.MatrixStackImpl;
@@ -39,17 +40,19 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 		this.program = new State<>();
 		this.cullMode = new State<>(CullMode.NONE); //TODO change this to BACK once everything is working
 		this.lineWidth = new State<>(1.0F);
-		this.viewport = new State<>();
-		this.scissor = new State<>();
+		this.viewport = new State<>(Viewport.of(0, 0, 0, 0, 0.0F, 1.0F));
+		this.scissor = new State<>(Scissor.of(0, 0, 0, 0));
 		this.framebuffer = new State<>();
 		this.clear = new Vector4f();
 		this.vertexBuffers = new ArrayList<>();
 		this.indexBuffer = new State<>();
 	}
 	
-	public void sync(ISync sync) {
-		sync.sync(this);
-	}
+	//TODO remove, only used by vulkan
+	public abstract void wait(Semaphore semaphore, PipelineStage stage);
+	
+	//TODO remove, only used by vulkan
+	public abstract void signal(Semaphore semaphore);
 	
 	public IShaderProgram getProgram() {
 		return this.program.getValue();
@@ -97,12 +100,16 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 	}
 	
 	public void clear(int r, int g, int b, int a) {
-		this.clear.set(
+		this.clear(
 			Color.normalize(r),
 			Color.normalize(g),
 			Color.normalize(b),
 			Color.normalize(a)
 		);
+	}
+	
+	public void clear(float r, float g, float b, float a) {
+		this.clear.set(r, g, b, a);
 	}
 	
 	public abstract void draw(int instanceCount, int start, int amount);
@@ -145,8 +152,12 @@ public abstract class RenderContext extends MatrixStackImpl implements AutoClose
 			}
 		}
 		
+		public boolean exists() {
+			return this.value != null;
+		}
+		
 		public void check(String name) {
-			if(this.value == null) {
+			if(!this.exists()) {
 				throw new IllegalStateException("Required state [" + name + "] is not bound");
 			}
 		}

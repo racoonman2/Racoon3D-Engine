@@ -10,6 +10,7 @@ import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IMappedMemoryRegion;
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
+import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.vulkan.ITexture;
 import racoonman.r3d.render.api.vulkan.types.BufferUsage;
 import racoonman.r3d.render.api.vulkan.types.Format;
@@ -53,8 +54,8 @@ public abstract class RenderService implements AutoCloseable {
 
 	public abstract IDeviceBuffer allocate(long size, BufferUsage... usages);
 
-	public abstract IFramebuffer createFramebuffer(Window window);
-
+	public abstract IWindowSurface createSurface(Window window);
+	
 	public abstract IFramebuffer createFramebuffer(int width, int height, int frameCount);
 
 	public abstract IAttachment createAttachment(int width, int height, int layers, ImageLayout layout, Format format, ViewType viewType, ImageUsage... usage);

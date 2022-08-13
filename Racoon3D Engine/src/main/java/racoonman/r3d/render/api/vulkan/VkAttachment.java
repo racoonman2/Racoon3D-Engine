@@ -10,15 +10,15 @@ import racoonman.r3d.render.api.vulkan.types.ViewType;
 import racoonman.r3d.util.Util;
 
 class VkAttachment implements IAttachment {
-	private int width;
-	private int height;
-	private int layers;
-	private Format format;
-	private ViewType viewType;
-	private ImageUsage[] usage;
-	private TextureState state;
-	private Device device;
-	private ImageView imageView;
+	protected int width;
+	protected int height;
+	protected int layers;
+	protected Format format;
+	protected ViewType viewType;
+	protected ImageUsage[] usage;
+	protected TextureState state;
+	protected Device device;
+	protected ImageView imageView;
 
 	public VkAttachment(int width, int height, int layers, Format format, ViewType viewType, ImageUsage[] usage, Device device) {
 		this(width, height, layers, format, viewType, usage, TextureState.DEFAULT.copy(), device);
@@ -65,6 +65,11 @@ class VkAttachment implements IAttachment {
 	@Override
 	public int getHeight() {
 		return this.height;
+	}
+
+	@Override
+	public int getLayerCount() {
+		return this.layers;
 	}
 
 	@Override

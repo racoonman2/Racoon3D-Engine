@@ -7,11 +7,14 @@ import org.lwjgl.system.NativeResource;
 
 import racoonman.r3d.core.R3DRuntime;
 import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.Scissor;
+import racoonman.r3d.render.Viewport;
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
+import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.vulkan.ITexture;
 import racoonman.r3d.render.api.vulkan.types.BufferUsage;
 import racoonman.r3d.render.api.vulkan.types.Format;
@@ -42,6 +45,18 @@ public class RenderSystem {
 		}
 		return service;
 	}
+
+	public static RenderContext begin(Window window) {
+		return begin(window.getTarget());
+	}
+	
+	public static RenderContext begin(IFramebuffer target) {
+		RenderContext ctx = begin();
+		target.bind(ctx);
+		ctx.viewport(Viewport.of(target, 0.0F, 1.0F));
+		ctx.scissor(Scissor.of(target));
+		return ctx;
+	}
 	
 	public static RenderContext begin() {
 		return getService().begin();
@@ -63,16 +78,16 @@ public class RenderSystem {
 		return getService().allocate(size, usages);
 	}
 	
+	public static IWindowSurface createSurface(Window window) {
+		return getService().createSurface(window);
+	}
+	
 	public static IShader createShader(ShaderStage stage, String entry, String file, String... args) {
 		return getService().createShader(stage, entry, file, args);
 	}
 	
 	public static IShaderProgram createProgram(IShader... shaders) {
 		return getService().createProgram(shaders);
-	}
-
-	public static IFramebuffer createFramebuffer(Window window) {
-		return getService().createFramebuffer(window);
 	}
 
 	public static IFramebuffer createFramebuffer(int width, int height, int frameCount) {

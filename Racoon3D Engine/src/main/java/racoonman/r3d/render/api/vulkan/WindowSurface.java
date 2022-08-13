@@ -12,7 +12,7 @@ import org.lwjgl.system.MemoryStack;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.window.Window;
 
-public class WindowSurface implements IHandle {
+class WindowSurface implements IHandle {
 	private Vulkan vulkan;
 	private long handle;
 	

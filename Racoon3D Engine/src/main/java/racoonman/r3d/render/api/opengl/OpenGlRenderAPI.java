@@ -1,9 +1,9 @@
-package racoonman.r3d.render.api.gl;
+package racoonman.r3d.render.api.opengl;
 
 import racoonman.r3d.render.core.IRenderAPI;
 import racoonman.r3d.render.core.RenderService;
 
-public class GlRenderAPI implements IRenderAPI {
+public class OpenGlRenderAPI implements IRenderAPI {
 
 	@Override
 	public String getName() {

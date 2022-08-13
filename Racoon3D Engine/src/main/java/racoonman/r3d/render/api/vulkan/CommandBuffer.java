@@ -14,6 +14,7 @@ import static org.lwjgl.vulkan.VK10.vkBeginCommandBuffer;
 import static org.lwjgl.vulkan.VK10.vkCmdBindIndexBuffer;
 import static org.lwjgl.vulkan.VK10.vkCmdBindPipeline;
 import static org.lwjgl.vulkan.VK10.vkCmdBindVertexBuffers;
+import static org.lwjgl.vulkan.VK10.vkCmdClearAttachments;
 import static org.lwjgl.vulkan.VK10.vkCmdCopyBuffer;
 import static org.lwjgl.vulkan.VK10.vkCmdDraw;
 import static org.lwjgl.vulkan.VK10.vkCmdDrawIndexed;
@@ -33,6 +34,8 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkBufferMemoryBarrier;
+import org.lwjgl.vulkan.VkClearAttachment;
+import org.lwjgl.vulkan.VkClearRect;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo;
 import org.lwjgl.vulkan.VkCommandBufferBeginInfo;
@@ -109,6 +112,10 @@ public class CommandBuffer implements IHandle {
 	@Override
 	public void free() {
 		vkFreeCommandBuffers(this.pool.getDevice().get(), this.pool.asLong(), this.buffer);
+	}
+	
+	public void clear(VkClearAttachment.Buffer attachments, VkClearRect.Buffer rects) {
+		vkCmdClearAttachments(this.buffer, attachments, rects);
 	}
 	
 	public void draw(int vertexCount, int instanceCount, int firstVertex, int firstInstance) {

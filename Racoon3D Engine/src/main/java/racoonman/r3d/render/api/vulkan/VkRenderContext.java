@@ -2,14 +2,20 @@ package racoonman.r3d.render.api.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.system.NativeResource;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkViewport;
 
 import racoonman.r3d.render.RenderContext;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.vulkan.FrameManager.Frame;
+import racoonman.r3d.render.api.vulkan.sync.Semaphore;
 import racoonman.r3d.render.api.vulkan.types.PipelineStage;
 
 //TODO remember to make this class package only and make applyState() private
@@ -19,11 +25,25 @@ public class VkRenderContext extends RenderContext {
 	private CommandRecorder recorder;
 	private RenderPass activePass;
 	private boolean inPass;
+	private Map<PipelineStage, Set<Semaphore>> waits;
+	private Set<Semaphore> signals;
 	
 	public VkRenderContext(WorkDispatcher dispatcher, Frame frame) {
 		this.dispatcher = dispatcher;
 		this.frame = frame;
 		this.recorder = new CommandRecorder(this);
+		this.waits = new HashMap<>();
+		this.signals = new HashSet<>();
+	}
+
+	@Override
+	public void wait(Semaphore semaphore, PipelineStage stage) {
+		this.waits.computeIfAbsent(stage, (k) -> new HashSet<>()).add(semaphore);
+	}
+
+	@Override
+	public void signal(Semaphore semaphore) {
+		this.signals.add(semaphore);
 	}
 
 	@Override
@@ -44,21 +64,33 @@ public class VkRenderContext extends RenderContext {
 
 	@Override
 	public void submit() {
+		//No pass was started, framebuffer still needs to be cleared
+		if(this.activePass == null) {
+			this.applyState();
+		}
+		
 		this.maybeEndPass();
-
+		
 		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
 		cmdBuffer.begin();
 		this.recorder.submit(cmdBuffer);
 		cmdBuffer.end();
 
-		this.dispatcher.submit(QueueSubmission.of()
-			.withCommandBuffer(this.frame.getCommandBuffer())
-			.withFence(this.frame.getFence())
-			.withStageMask(PipelineStage.COLOR_ATTACHMENT_OUTPUT));
-	}
-	
-	public void free(NativeResource resource) {
-		this.frame.free(resource);
+		QueueSubmission submission = QueueSubmission.of()
+			.withCommandBuffer(cmdBuffer)
+			.withFence(this.frame.getFence());
+		
+		for(Semaphore signal : this.signals) {
+			submission.withSignal(signal);
+		}
+		
+		for(Entry<PipelineStage, Set<Semaphore>> entry : this.waits.entrySet()) {
+			for(Semaphore wait : entry.getValue()) {
+				submission.withWait(wait, entry.getKey());
+			}
+		}
+		
+		this.dispatcher.submit(submission);
 	}
 	
 	private void maybeBeginPass(IFramebuffer framebuffer) {
@@ -81,7 +113,6 @@ public class VkRenderContext extends RenderContext {
 	}
 	
 	public void applyState() {
-		this.viewport.check("viewport");
 		this.viewport.applyChanges((viewport) -> {
 			this.recorder.record((cmdBuffer) -> {
 				try(MemoryStack stack = stackPush()) {
@@ -97,7 +128,6 @@ public class VkRenderContext extends RenderContext {
 				}
 			});
 		});
-		this.scissor.check("scissor");
 		this.scissor.applyChanges((scissor) -> {
 			this.recorder.record((cmdBuffer) -> {
 				try(MemoryStack stack = stackPush()) {

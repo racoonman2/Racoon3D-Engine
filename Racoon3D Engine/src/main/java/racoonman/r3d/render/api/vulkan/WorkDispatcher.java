@@ -10,7 +10,7 @@ import org.lwjgl.system.MemoryStack;
 
 import racoonman.r3d.render.api.vulkan.CommandBuffer.Level;
 import racoonman.r3d.render.api.vulkan.CommandBuffer.SubmitMode;
-import racoonman.r3d.render.api.vulkan.sync.Fence;
+import racoonman.r3d.render.api.vulkan.sync.VkFence;
 import racoonman.r3d.render.api.vulkan.types.QueueFamily;
 
 class WorkDispatcher {
@@ -49,7 +49,7 @@ class WorkDispatcher {
 	public <T> CompletableFuture<T> supplyAsync(Function<CommandBuffer, T> task) {
 		CommandBuffer buffer = this.dispatch(Level.PRIMARY, SubmitMode.SINGLE);
 		return CompletableFuture.supplyAsync(() -> {
-			Fence fence = new Fence(this.device, true);
+			VkFence fence = new VkFence(this.device, true);
 		
 			buffer.begin();
 			T result = task.apply(buffer);
@@ -61,7 +61,7 @@ class WorkDispatcher {
 				this.queue.submit(QueueSubmission.of().withCommandBuffer(buffer).withFence(fence));
 			}
 			
-			fence.fenceWait(true, Long.MAX_VALUE);
+			fence.await(Long.MAX_VALUE);
 			buffer.free();
 			fence.free();
 			return result;

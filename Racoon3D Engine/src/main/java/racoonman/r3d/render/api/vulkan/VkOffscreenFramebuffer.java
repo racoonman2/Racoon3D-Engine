@@ -1,29 +1,24 @@
 package racoonman.r3d.render.api.vulkan;
 
-import org.lwjgl.system.MemoryUtil;
-
 class VkOffscreenFramebuffer extends VkFramebuffer {
+	private int index;
 	private int frameCount;
 	
 	VkOffscreenFramebuffer(Device device, int width, int height, int frameCount) {
 		super(width, height);
 		
 		this.frameCount = frameCount;
-		this.withSize(width, height);
-	}
-
-	@Override
-	public void withSize(int newWidth, int newHeight) {
 		this.frames = new VkFrame[this.frameCount]; {
 			for(int i = 0; i < this.frameCount; i++) {
-				this.frames[i] = new VkFrame();
+				this.frames[i] = new VkFrame(device);
 			}
 		}
 	}
 
 	@Override
-	public void acquire() {
+	public boolean acquire() {
 		this.index %= this.frames.length;
+		return false;
 	}
 
 	@Override
@@ -32,12 +27,13 @@ class VkOffscreenFramebuffer extends VkFramebuffer {
 	}
 
 	@Override
-	public long asLong() {
-		return MemoryUtil.NULL;
+	int getIndex() {
+		return this.index;
 	}
-
+	
 	@Override
 	public void free() {
+		// TODO
 	}
 }
 

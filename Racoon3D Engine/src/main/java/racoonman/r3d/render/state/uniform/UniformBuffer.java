@@ -1,4 +1,4 @@
-package racoonman.r3d.render.uniform;
+package racoonman.r3d.render.state.uniform;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.vulkan.types.BufferUsage;

@@ -1,7 +1,6 @@
 package racoonman.r3d.render.api.sync;
 
-import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.natives.IHandle;
 
-public interface ISync {
-	void sync(RenderContext context);
+public interface ISync extends IHandle {
 }

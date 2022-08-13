@@ -1,15 +1,12 @@
 package racoonman.r3d.render.api.vulkan;
 
-import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.lwjgl.system.NativeResource;
-
 import racoonman.r3d.render.api.vulkan.CommandBuffer.Level;
 import racoonman.r3d.render.api.vulkan.CommandBuffer.SubmitMode;
-import racoonman.r3d.render.api.vulkan.sync.Fence;
+import racoonman.r3d.render.api.vulkan.sync.VkFence;
 import racoonman.r3d.render.api.vulkan.types.Status;
 
 class FrameManager {
@@ -23,6 +20,14 @@ class FrameManager {
 		this.device = device;
 		this.cleanFrames = new ConcurrentLinkedQueue<>();
 		this.dirtyFrames = new ConcurrentLinkedQueue<>();
+	}
+	
+	public Queue<Frame> getCleanFrames() {
+		return this.cleanFrames;
+	}
+	
+	public Queue<Frame> getDirtyFrames() {
+		return this.dirtyFrames;
 	}
 	
 	public Frame take() {
@@ -44,41 +49,32 @@ class FrameManager {
         }
 	}
 	
+	//TODO add free queue for context local resource freeing
 	class Frame {
 		private CommandBuffer cmdBuffer;
-		private Fence fence;
-		private Queue<NativeResource> freeQueue;
+		private VkFence fence;
 		
 		public Frame() {
 			this.cmdBuffer = FrameManager.this.dispatcher.dispatch(Level.PRIMARY, SubmitMode.SINGLE);
-			this.fence = new Fence(FrameManager.this.device, false);
-			this.freeQueue = new ArrayDeque<>();
+			this.fence = new VkFence(FrameManager.this.device, false);
 		}
 		
 		public CommandBuffer getCommandBuffer() {
 			return this.cmdBuffer;
 		}
 		
-		public Fence getFence() {
+		public VkFence getFence() {
 			return this.fence;
 		}
 		
 		public boolean poll() {
 			if(this.fence.is(Status.SUCCESS)) {
-				while(!this.freeQueue.isEmpty()) {
-					this.freeQueue.poll().free();
-				}
-				
 				this.cmdBuffer.reset();
 				this.fence.reset();
 				return true;
 			} else {
 				return false;
 			}
-		}
-		
-		public void free(NativeResource resource) {
-			this.freeQueue.add(resource);
 		}
 		
 		public Frame markDirty() {

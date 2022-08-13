@@ -14,6 +14,8 @@ public interface ITexture extends IHandle {
 	
 	int getHeight();
 	
+	int getLayerCount();
+	
 	Format getFormat();
 
 	TextureState getState();

@@ -23,7 +23,7 @@ import org.lwjgl.vulkan.VkQueueFamilyProperties;
 import org.lwjgl.vulkan.VkSubmitInfo;
 
 import racoonman.r3d.core.R3DRuntime;
-import racoonman.r3d.render.api.vulkan.sync.Fence;
+import racoonman.r3d.render.api.vulkan.sync.VkFence;
 import racoonman.r3d.render.api.vulkan.sync.Semaphore;
 import racoonman.r3d.render.api.vulkan.types.IVkType;
 import racoonman.r3d.render.api.vulkan.types.QueueFamily;
@@ -60,7 +60,7 @@ public abstract class DeviceQueue {
 				.pWaitSemaphores(QueueSubmission.toLongBuffer(waits, stack))
 				.pWaitDstStageMask(stack.ints(IVkType.asInts(submission.stageMasks())));
 			
-			Holder<Fence> fence = submission.fence();
+			Holder<VkFence> fence = submission.fence();
 			int status = vkQueueSubmit(this.queue, info, fence.isPresent() ? fence.getValue().asLong() : 0L);
 			
 			//vkQueueSubmit gets special result handling

@@ -12,6 +12,7 @@ import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IMappedMemoryRegion;
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
+import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.vulkan.types.BufferUsage;
 import racoonman.r3d.render.api.vulkan.types.Format;
 import racoonman.r3d.render.api.vulkan.types.ImageLayout;
@@ -35,8 +36,8 @@ class VkRenderService extends RenderService {
 	private Device device;
 	private WorkDispatcher graphicsDispatch;
 	private VkMappedRegion mappedRegion;
-	private Queue<NativeResource> freeQueue;
 	private FrameManager frameManager;
+	private Queue<NativeResource> freeQueue;
 	
 	public VkRenderService(IRenderPlatform platform, boolean validate) {
 		super(new VkShaderProcessor());
@@ -45,8 +46,8 @@ class VkRenderService extends RenderService {
 		this.device = new Device(this.vulkan, this.physicalDevice, IDeviceExtension.DYNAMIC_RENDERING, IDeviceExtension.KHR_SWAPCHAIN, IDeviceExtension.MULTI_DRAW, IDeviceExtension.PUSH_DESCRIPTOR);
 		this.graphicsDispatch = new WorkDispatcher(this.device, QueueFamily.GRAPHICS, 0);
 		this.mappedRegion = new VkMappedRegion(this, Config.initialMappedRegionSize);
-		this.freeQueue = new ConcurrentLinkedQueue<>();
 		this.frameManager = new FrameManager(this.graphicsDispatch, this.device);
+		this.freeQueue = new ConcurrentLinkedQueue<>();
 	}
 
 	@Override
@@ -73,8 +74,8 @@ class VkRenderService extends RenderService {
 	}
 
 	@Override
-	public IFramebuffer createFramebuffer(Window window) {
-		return new VkWindowFramebuffer(this.device, this.vulkan, window, 0);
+	public IWindowSurface createSurface(Window window) {
+		return new VkWindowSurface(this.device, this.vulkan, window, 0);
 	}
 
 	@Override
@@ -99,6 +100,8 @@ class VkRenderService extends RenderService {
 	
 	@Override
 	public void pollInternal() {
+		this.frameManager.poll();
+		
 		if(!this.freeQueue.isEmpty()) {
 			this.graphicsDispatch.join();
 			
@@ -106,15 +109,12 @@ class VkRenderService extends RenderService {
 				this.freeQueue.poll().free();
 			}
 		}
-		
-		this.frameManager.poll();
 	}
 
 	@Override
 	public void free(NativeResource resource) {
 		this.freeQueue.add(resource);
 	}
-
 	@Override
 	public void close() {
 		

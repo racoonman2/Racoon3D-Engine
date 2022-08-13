@@ -7,24 +7,20 @@ import java.util.List;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 
-import racoonman.r3d.render.api.vulkan.sync.Fence;
+import racoonman.r3d.render.api.vulkan.sync.VkFence;
 import racoonman.r3d.render.api.vulkan.sync.Semaphore;
 import racoonman.r3d.render.api.vulkan.types.PipelineStage;
 import racoonman.r3d.util.Holder;
 
-record QueueSubmission(List<CommandBuffer> commandBuffers, List<Semaphore> waits, List<PipelineStage> stageMasks, List<Semaphore> signals, Holder<Fence> fence) {
+record QueueSubmission(List<CommandBuffer> commandBuffers, List<Semaphore> waits, List<PipelineStage> stageMasks, List<Semaphore> signals, Holder<VkFence> fence) {
 	
 	public QueueSubmission withCommandBuffer(CommandBuffer cmdBuffer) {
 		this.commandBuffers.add(cmdBuffer);
 		return this;
 	}
 	
-	public QueueSubmission withWait(Semaphore semaphore) {
+	public QueueSubmission withWait(Semaphore semaphore, PipelineStage stage) {
 		this.waits.add(semaphore);
-		return this;
-	}
-	
-	public QueueSubmission withStageMask(PipelineStage stage) {
 		this.stageMasks.add(stage);
 		return this;
 	}
@@ -34,7 +30,7 @@ record QueueSubmission(List<CommandBuffer> commandBuffers, List<Semaphore> waits
 		return this;
 	}
 	
-	public QueueSubmission withFence(Fence fence) {
+	public QueueSubmission withFence(VkFence fence) {
 		this.fence.map(fence);
 		return this;
 	}

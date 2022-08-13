@@ -14,16 +14,16 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkFenceCreateInfo;
 
+import racoonman.r3d.render.api.objects.IFence;
 import racoonman.r3d.render.api.vulkan.Device;
 import racoonman.r3d.render.api.vulkan.types.IVkType;
 import racoonman.r3d.render.api.vulkan.types.Status;
-import racoonman.r3d.render.natives.IHandle;
 
-public class Fence implements IHandle {
+public class VkFence implements IFence {
 	private Device device;
 	private long handle;
 	
-	public Fence(Device device, boolean signaled) {
+	public VkFence(Device device, boolean signaled) {
 		try(MemoryStack stack = stackPush()) {
 			this.device = device;
 			
@@ -44,15 +44,12 @@ public class Fence implements IHandle {
 	public Status getStatus() {
 		return IVkType.byInt(vkGetFenceStatus(this.device.get(), this.handle), Status.values());
 	}
-	
-	public void fenceWait(boolean waitAll, long timeout) {
-		vkWaitForFences(this.device.get(), this.handle, waitAll, timeout);
+
+	@Override
+	public void await(long timeout) {
+		vkWaitForFences(this.device.get(), this.handle, true, timeout);
 	}
-	
-	public void reset() {
-		vkResetFences(this.device.get(), this.handle);
-	}
-	
+
 	@Override
 	public long asLong() {
 		return this.handle;
@@ -61,5 +58,9 @@ public class Fence implements IHandle {
 	@Override
 	public void free() {
 		vkDestroyFence(this.device.get(), this.handle, null);
+	}
+	
+	public void reset() {
+		vkResetFences(this.device.get(), this.handle);
 	}
 }

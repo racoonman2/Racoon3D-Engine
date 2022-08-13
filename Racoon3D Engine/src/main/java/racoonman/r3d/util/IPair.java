@@ -16,21 +16,15 @@ public interface IPair<L, R> {
 			@Override
 			public R right() {
 				return right;
-			}			
-		};
-	}
-	
-	public static <L, R> IPair<L, R> empty() {
-		return new IPair<>() {
-
-			@Override
-			public L left() {
-				return null;
 			}
-
+			
 			@Override
-			public R right() {
-				return null;
+			public boolean equals(Object o) {
+				if(o instanceof IPair<?, ?> p) {
+					return p.left().equals(left) && p.right().equals(right);
+				} else {
+					return false;
+				}
 			}
 		};
 	}
