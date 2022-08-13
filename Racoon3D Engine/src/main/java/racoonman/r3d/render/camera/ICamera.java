@@ -18,7 +18,7 @@ public interface ICamera {
 		ctx.rotateX(rot.x);
 		ctx.rotateY(rot.y);
 		ctx.rotateZ(rot.z);
-		ctx.translate(pos.x, pos.y, pos.z);
+		ctx.translate(-pos.x, -pos.y, -pos.z);
 	}
 	
 	public static ICamera fixed(float x, float y, float z, float rX, float rY, float rZ) {

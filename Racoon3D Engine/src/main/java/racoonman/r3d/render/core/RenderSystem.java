@@ -45,13 +45,10 @@ public class RenderSystem {
 		}
 		return service;
 	}
-
-	public static RenderContext begin(Window window) {
-		return begin(window.getTarget());
-	}
 	
 	public static RenderContext begin(IFramebuffer target) {
 		RenderContext ctx = begin();
+		target.next();
 		target.bind(ctx);
 		ctx.viewport(Viewport.of(target, 0.0F, 1.0F));
 		ctx.scissor(Scissor.of(target));

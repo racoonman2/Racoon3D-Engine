@@ -20,7 +20,8 @@ import static org.lwjgl.vulkan.VK10.vkEndCommandBuffer;
 import static org.lwjgl.vulkan.VK10.vkFreeCommandBuffers;
 import static org.lwjgl.vulkan.VK10.vkResetCommandBuffer;
 import static org.lwjgl.vulkan.VK13.vkCmdBeginRendering;
-import static org.lwjgl.vulkan.VK13.vkCmdEndRendering;
+import static org.lwjgl.vulkan.VK13.*;
+import static org.lwjgl.vulkan.KHRPushDescriptor.*;
 import static racoonman.r3d.render.api.vulkan.VkUtils.vkAssert;
 
 import java.nio.LongBuffer;
@@ -40,8 +41,10 @@ import org.lwjgl.vulkan.VkMemoryBarrier;
 import org.lwjgl.vulkan.VkRect2D;
 import org.lwjgl.vulkan.VkRenderingInfo;
 import org.lwjgl.vulkan.VkViewport;
+import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.vulkan.types.BindPoint;
 import racoonman.r3d.render.api.vulkan.types.IndexType;
 import racoonman.r3d.render.api.vulkan.types.Level;
 import racoonman.r3d.render.api.vulkan.types.SubmitMode;
@@ -167,6 +170,10 @@ public class CommandBuffer implements IHandle {
 	
 	public void bindPipeline(IPipeline pipeline) {
 		vkCmdBindPipeline(this.buffer, pipeline.getBindPoint().getVkType(), pipeline.asLong());
+	}
+	
+	public void pushDescriptor(BindPoint bindPoint, PipelineLayout layout, int set, VkWriteDescriptorSet.Buffer writes) {
+		vkCmdPushDescriptorSetKHR(this.buffer, bindPoint.getVkType(), layout.asLong(), set, writes);
 	}
 	
 	public static record VertexBuffer(IDeviceBuffer buffer, long offset) {		

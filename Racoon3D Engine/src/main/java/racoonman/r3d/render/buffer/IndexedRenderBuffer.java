@@ -19,6 +19,7 @@ public class IndexedRenderBuffer extends RenderBufferImpl {
 	@Override
 	public void draw(RenderContext context, int instanceCount) {
 		this.bind(context);
+		
 		context.drawIndexed(instanceCount, 0, 0, this.indexCount);
 	}
 

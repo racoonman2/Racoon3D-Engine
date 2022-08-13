@@ -27,6 +27,7 @@ class VkWindowFramebuffer extends VkFramebuffer {
 		}
 	}
 	
+	@Override
 	public boolean next() {
 		return this.swapchain.acquire(this.frames[this.getIndex()].getAvailable());
 	}

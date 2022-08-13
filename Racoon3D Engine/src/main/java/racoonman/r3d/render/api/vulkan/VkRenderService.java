@@ -17,6 +17,7 @@ import racoonman.r3d.render.api.objects.IMappedMemoryRegion;
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.api.objects.IWindowSurface;
+import racoonman.r3d.render.api.vulkan.cache.RenderCache;
 import racoonman.r3d.render.api.vulkan.types.BufferUsage;
 import racoonman.r3d.render.api.vulkan.types.Format;
 import racoonman.r3d.render.api.vulkan.types.ImageLayout;
@@ -27,6 +28,7 @@ import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.core.IRenderPlatform;
 import racoonman.r3d.render.core.RenderService;
 import racoonman.r3d.render.shader.ShaderCompiler.Result;
+import racoonman.r3d.render.state.uniform.UniformBuffer;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.window.Window;
 
@@ -42,6 +44,8 @@ class VkRenderService extends RenderService {
 	private VkMappedRegion mappedRegion;
 	private FrameManager frameManager;
 	private Queue<NativeResource> freeQueue;
+	private RenderCache renderCache;
+	private UniformBuffer uniformBuffer;
 	
 	public VkRenderService(IRenderPlatform platform, boolean validate) {
 		super(new VkShaderProcessor());
@@ -52,11 +56,13 @@ class VkRenderService extends RenderService {
 		this.mappedRegion = new VkMappedRegion(this, Config.initialMappedRegionSize);
 		this.frameManager = new FrameManager(this.graphicsDispatch, this.device);
 		this.freeQueue = new ConcurrentLinkedQueue<>();
+		this.renderCache = new RenderCache(this.device);
+		this.uniformBuffer = new UniformBuffer(this.allocate(1000000L, BufferUsage.UNIFORM_BUFFER));
 	}
 
 	@Override
 	public RenderContext createContext() {
-		return new VkRenderContext(this.device, this.graphicsDispatch, this.frameManager.take());
+		return new VkRenderContext(this.renderCache, this.device, this.graphicsDispatch, this.frameManager.take(), this.uniformBuffer);
 	}
 
 	@Override

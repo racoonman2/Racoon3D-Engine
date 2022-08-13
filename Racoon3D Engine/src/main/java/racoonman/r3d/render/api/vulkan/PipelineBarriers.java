@@ -22,7 +22,7 @@ public class PipelineBarriers {
 				.dstAccessMask(IVkType.bitMask(Access.COLOR_WRITE))
 				.oldLayout(ImageLayout.UNDEFINED.getVkType())
 				.newLayout(ImageLayout.COLOR_OPTIMAL.getVkType())
-				.image(attachment.getView().getImage().getHandle())
+				.image(attachment.getView().getImage().asLong())
 				.subresourceRange((range) -> range
 					.aspectMask(IVkType.bitMask(Aspect.COLOR))
 					.baseMipLevel(0)
@@ -40,7 +40,7 @@ public class PipelineBarriers {
 				.srcAccessMask(IVkType.bitMask(Access.COLOR_WRITE))
 				.oldLayout(ImageLayout.COLOR_OPTIMAL.getVkType())
 				.newLayout(ImageLayout.PRESENT_SRC_KHR.getVkType())
-				.image(attachment.getView().getImage().getHandle())
+				.image(attachment.getView().getImage().asLong())
 				.subresourceRange((range) -> range
 					.aspectMask(IVkType.bitMask(Aspect.COLOR))
 					.baseMipLevel(0)
@@ -59,7 +59,7 @@ public class PipelineBarriers {
 				.dstAccessMask(IVkType.bitMask(Access.DEPTH_STENCIL_WRITE))
 				.oldLayout(ImageLayout.UNDEFINED.getVkType())
 				.newLayout(ImageLayout.DEPTH_STENCIL_OPTIMAL.getVkType())
-				.image(attachment.getView().getImage().getHandle())
+				.image(attachment.getView().getImage().asLong())
 				.subresourceRange((range) -> range
 					.aspectMask(IVkType.bitMask(Aspect.DEPTH, Aspect.STENCIL))
 					.baseMipLevel(0)

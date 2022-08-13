@@ -30,10 +30,13 @@ import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.lwjgl.system.MemoryStack;
 
 import racoonman.r3d.core.libraries.Libraries;
+import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.vulkan.types.PresentMode;
@@ -41,7 +44,7 @@ import racoonman.r3d.render.core.RenderSystem;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.util.math.Mathi;
 
-public class Window implements IHandle {
+public class Window implements IHandle, IFramebuffer {
 	private long handle;
 	private Monitor monitor;
 	private boolean fullscreen;
@@ -140,10 +143,6 @@ public class Window implements IHandle {
 		this.presentMode = presentMode;
 
 		this.surface = RenderSystem.createSurface(this);
-	}
-	
-	public boolean acquire() {
-		return this.surface.acquire();
 	}
 	
 	public boolean present() {
@@ -352,6 +351,12 @@ public class Window implements IHandle {
 		return this.keyboard;
 	}
 
+	public void tick() {
+		this.mouse.tick();
+		this.keyboard.tick();
+		pollEvents();
+	}
+	
 	public int getFrameCount() {
 		return this.frameCount;
 	}
@@ -370,6 +375,36 @@ public class Window implements IHandle {
 
 	public static void pollEvents() {
 		glfwPollEvents();
+	}
+
+	@Override
+	public boolean next() {
+		return this.surface.acquire();
+	}
+
+	@Override
+	public List<IAttachment> getColorAttachments() {
+		return this.getTarget().getColorAttachments();
+	}
+
+	@Override
+	public Optional<IAttachment> getDepthAttachment() {
+		return this.getTarget().getDepthAttachment();
+	}
+
+	@Override
+	public IFramebuffer withColor(IAttachment attachment) {
+		return this.getTarget().withColor(attachment);
+	}
+
+	@Override
+	public IFramebuffer withDepth(IAttachment attachment) {
+		return this.getTarget().withDepth(attachment);
+	}
+	
+	@Override
+	public void bind(RenderContext context) {
+		this.getTarget().bind(context);
 	}
 
 	static {

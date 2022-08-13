@@ -29,7 +29,7 @@ public class PipelineLayout implements IHandle {
 			LongBuffer pLayouts = stack.mallocLong(layouts.length);
 			
 			for(int i = 0; i < layouts.length; i++) {
-				pLayouts.put(i, layouts[i].getHandle());
+				pLayouts.put(i, layouts[i].asLong());
 			}
 			
 			VkPipelineLayoutCreateInfo layoutInfo = VkPipelineLayoutCreateInfo.calloc(stack)

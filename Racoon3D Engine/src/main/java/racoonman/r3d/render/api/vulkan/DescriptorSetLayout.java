@@ -7,6 +7,7 @@ import static org.lwjgl.vulkan.VK10.vkDestroyDescriptorSetLayout;
 import static racoonman.r3d.render.api.vulkan.VkUtils.vkAssert;
 
 import java.nio.LongBuffer;
+import java.util.Arrays;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
@@ -14,13 +15,14 @@ import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo;
 
 import racoonman.r3d.render.api.vulkan.types.DescriptorType;
 import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.resource.codec.ArrayCodec;
 import racoonman.r3d.resource.codec.ICodec;
 import racoonman.r3d.resource.codec.IField;
 import racoonman.r3d.resource.codec.PrimitiveCodec;
 
-public class DescriptorSetLayout {
+public class DescriptorSetLayout implements IHandle {
 	private Device device;
 	private int flags;
 	private DescriptorBinding[] bindings;
@@ -62,10 +64,21 @@ public class DescriptorSetLayout {
 		return this.bindings;
 	}
 
-	public long getHandle() {
+	@Override
+	public long asLong() {
 		return this.handle;
 	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if(object instanceof DescriptorSetLayout other) {
+			return other.flags == this.flags && Arrays.equals(other.bindings, this.bindings);
+		} else {
+			return false;
+		}
+	}
 
+	@Override
 	public void free() {
 		vkDestroyDescriptorSetLayout(this.device.get(), this.handle, null);
 	}
@@ -87,5 +100,14 @@ public class DescriptorSetLayout {
 			ArrayCodec.of(ShaderStage.ORDINAL_CODEC, ShaderStage[]::new).fetch("stage_flags", DescriptorBinding::stageFlags),
 			DescriptorBinding::new
 		);
+		
+		@Override
+		public boolean equals(Object object) {
+			if(object instanceof DescriptorBinding other) {
+				return other.binding == this.binding && other.type.equals(this.type) && other.count == this.count && Arrays.equals(other.stageFlags, this.stageFlags);
+			} else {
+				return false;
+			}
+		}
 	}
 }
