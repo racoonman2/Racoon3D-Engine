@@ -135,7 +135,7 @@ public class Window implements IHandle {
 		this.keyboard = new Keyboard(this);
 		this.frameCount = frameCount;
 		this.presentMode = presentMode;
-		
+
 		this.target = RenderSystem.createFramebuffer(this);
 	}
 	

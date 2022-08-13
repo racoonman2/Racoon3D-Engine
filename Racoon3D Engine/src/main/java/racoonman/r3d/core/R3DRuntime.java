@@ -6,7 +6,7 @@ import java.util.function.Supplier;
 import racoonman.r3d.core.launch.IExecutable;
 
 public class R3DRuntime {
-	private static Optional<Client> activeClient;
+	private static Optional<Client> activeClient = Optional.empty();
 	
 	public static void launch(Client client, Supplier<IExecutable> launch) throws Exception {
 		if(activeClient.isEmpty()) {

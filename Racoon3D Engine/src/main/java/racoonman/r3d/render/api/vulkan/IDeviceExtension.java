@@ -19,7 +19,7 @@ public interface IDeviceExtension {
 	public static final IDeviceExtension KHR_SWAPCHAIN = simple(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	public static final IDeviceExtension DYNAMIC_RENDERING = feature(KHRDynamicRendering.VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, true, VkPhysicalDeviceDynamicRenderingFeatures::calloc, VkPhysicalDeviceDynamicRenderingFeatures::sType$Default, VkPhysicalDeviceDynamicRenderingFeatures::dynamicRendering, VkDeviceCreateInfo::pNext);
 	public static final IDeviceExtension PUSH_DESCRIPTOR = simple(KHRPushDescriptor.VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
-	//this cant be allocated on the stack for some reason, or the program will hang
+	// allocating this on the stack causes the program to hang for some reason
 	public static final IDeviceExtension MULTI_DRAW = feature(EXTMultiDraw.VK_EXT_MULTI_DRAW_EXTENSION_NAME, true, (stack) -> VkPhysicalDeviceMultiDrawFeaturesEXT.calloc(), VkPhysicalDeviceMultiDrawFeaturesEXT::sType$Default, VkPhysicalDeviceMultiDrawFeaturesEXT::multiDraw, VkDeviceCreateInfo::pNext);
 	
 	void apply(VkDeviceCreateInfo createInfo);

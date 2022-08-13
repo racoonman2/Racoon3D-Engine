@@ -16,11 +16,15 @@ public class ClientBootstrap {
 		String launchClass = System.getProperty("r3d.launchClass");
 		
 		if(launchClass == null) {
-			throw new IllegalStateException("Missing launch class");
+			throw new IllegalStateException("Missing launch class vm arg");
 		}
 		
 		Class<?> cls = Class.forName(launchClass);
 
+		if(cls == null) {
+			throw new IllegalStateException("Unable to find launch class [" + launchClass + "]");
+		}
+		
 		if(cls.isAnnotationPresent(Client.class)) {
 			if(IExecutable.class.isAssignableFrom(cls)) {
 				Supplier<IExecutable> launcher = null;
