@@ -9,17 +9,18 @@ import static racoonman.r3d.render.api.vulkan.VkUtils.vkAssert;
 import java.nio.LongBuffer;
 
 import org.lwjgl.system.MemoryStack;
-import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 
+import racoonman.r3d.render.api.vulkan.types.Aspect;
 import racoonman.r3d.render.api.vulkan.types.Format;
+import racoonman.r3d.render.api.vulkan.types.IVkType;
 import racoonman.r3d.render.api.vulkan.types.ImageUsage;
 import racoonman.r3d.render.api.vulkan.types.ViewType;
 import racoonman.r3d.render.natives.IHandle;
 
-public class ImageView implements IHandle {
+class ImageView implements IHandle {
 	private Device device;
-	private Image image;
+	private VkImage image;
 	private int aspectMask;
 	private int baseMipLevel;
 	private int baseArrayLevel;
@@ -29,11 +30,11 @@ public class ImageView implements IHandle {
 	private ViewType viewType;
 	private long handle;
 	
-	public ImageView(Device device, Image image, int aspectMask, int baseMipLevel, int baseArrayLayer, ViewType viewType) {
-		this(device, image, aspectMask, baseMipLevel, baseArrayLayer, image.getFormat(), image.getArrayLayers(), image.getMipLevels(), viewType);
+	public ImageView(Device device, VkImage image, int aspectMask, int baseMipLevel, int baseArrayLayer, ViewType viewType) {
+		this(device, image, aspectMask, baseMipLevel, baseArrayLayer, image.getFormat(), image.getLayers(), image.getMipLevels(), viewType);
 	}	
 	
-	public ImageView(Device device, Image image, int aspectMask, int baseMipLevel, int baseArrayLayer, Format format, int layerCount, int mipLevels, ViewType viewType) {
+	public ImageView(Device device, VkImage image, int aspectMask, int baseMipLevel, int baseArrayLayer, Format format, int layerCount, int mipLevels, ViewType viewType) {
 		try(MemoryStack stack = stackPush()) {
 			this.image = image;
 			this.device = device;
@@ -62,6 +63,10 @@ public class ImageView implements IHandle {
 		}
 	}
 	
+	public Device getDevice() {
+		return this.device;
+	}
+	
 	public int getWidth() {
 		return this.image.getWidth();
 	}
@@ -70,7 +75,7 @@ public class ImageView implements IHandle {
 		return this.image.getHeight();
 	}
 	
-	public Image getImage() {
+	public VkImage getImage() {
 		return this.image;
 	}
 
@@ -109,9 +114,7 @@ public class ImageView implements IHandle {
 	
 	@Override
 	public void free() {
-		VkDevice device = this.device.get();
-		
-		vkDestroyImageView(device, this.handle, null);
+		vkDestroyImageView(this.device.get(), this.handle, null);
 	}
 	
 	//TODO remove
@@ -123,7 +126,7 @@ public class ImageView implements IHandle {
 		private int layerCount;
 		private int mipLevels;
 		private ViewType viewType;
-		private Image image;
+		private VkImage image;
 		
 		private ImageViewBuilder() {
 			this.layerCount = 1;
@@ -131,8 +134,8 @@ public class ImageView implements IHandle {
 			this.viewType = ViewType.TYPE_2D;
 		}
 		
-		public ImageViewBuilder aspectMask(int aspectMask) {
-			this.aspectMask = aspectMask;
+		public ImageViewBuilder aspects(Aspect... aspects) {
+			this.aspectMask = IVkType.bitMask(aspects);
 			return this;
 		}
 		
@@ -166,7 +169,7 @@ public class ImageView implements IHandle {
 			return this;
 		}
 		
-		public ImageViewBuilder image(Image image) {
+		public ImageViewBuilder image(VkImage image) {
 			this.image = image;
 			return this;
 		}

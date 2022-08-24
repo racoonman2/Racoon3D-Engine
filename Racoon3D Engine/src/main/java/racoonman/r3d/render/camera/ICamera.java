@@ -2,19 +2,19 @@ package racoonman.r3d.render.camera;
 
 import org.joml.Vector3f;
 
-import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.Context;
 import racoonman.r3d.render.matrix.IMatrixType;
 
 public interface ICamera {
-	Vector3f getPos();
+	Vector3f getPosition();
 	
-	Vector3f getRot();
+	Vector3f getRotation();
 	
-	default void transform(RenderContext ctx) {
+	default void transform(Context ctx) {
 		ctx.matrixType(IMatrixType.VIEW);
 		
-		Vector3f pos = this.getPos();
-		Vector3f rot = this.getRot();
+		Vector3f pos = this.getPosition();
+		Vector3f rot = this.getRotation();
 		ctx.rotateX(rot.x);
 		ctx.rotateY(rot.y);
 		ctx.rotateZ(rot.z);
@@ -27,12 +27,12 @@ public interface ICamera {
 			private Vector3f rot = new Vector3f(rX, rY, rZ);
 
 			@Override
-			public Vector3f getPos() {
+			public Vector3f getPosition() {
 				return this.pos;
 			}
 
 			@Override
-			public Vector3f getRot() {
+			public Vector3f getRotation() {
 				return this.rot;
 			}
 		};
@@ -44,12 +44,12 @@ public interface ICamera {
 			private Vector3f rot = new Vector3f();
 
 			@Override
-			public Vector3f getPos() {
+			public Vector3f getPosition() {
 				return this.pos;
 			}
 
 			@Override
-			public Vector3f getRot() {
+			public Vector3f getRotation() {
 				return this.rot;
 			}
 		};

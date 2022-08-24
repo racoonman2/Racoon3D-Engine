@@ -5,12 +5,12 @@ import java.util.Optional;
 
 import racoonman.r3d.render.buffer.EmptyRenderBuffer;
 import racoonman.r3d.render.buffer.IRenderBuffer;
-import racoonman.r3d.render.buffer.IndexedRenderBuffer;
+import racoonman.r3d.render.buffer.IRenderBuffer.Type;
+import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.util.buffer.IGrowableBuffer;
 import racoonman.r3d.render.util.buffer.IResizer;
 import racoonman.r3d.util.IPair;
 
-//move this into a buffer attachment instead of a seperate class
 public class IndexedVertexBuilder extends VertexBuilderImpl implements IIndexedBuilder {
 	private IGrowableBuffer<ByteBuffer> indices;
 	private int nextIndice;
@@ -18,7 +18,7 @@ public class IndexedVertexBuilder extends VertexBuilderImpl implements IIndexedB
 	private int[] indexFillBuffer;
 
 	public IndexedVertexBuilder(IVertexOrder vertexOrder, int indexBufferSize) {
-		super(vertexOrder, false);
+		super(vertexOrder);
 		this.indices = IGrowableBuffer.bytes(IResizer.fourth(), indexBufferSize);
 	}
 	
@@ -50,20 +50,27 @@ public class IndexedVertexBuilder extends VertexBuilderImpl implements IIndexedB
 	}
 
 	@Override
-	public void finish(IRenderBuffer target) {
-		target.update(this.vertexBuffers.stream().map((buffer) -> {
+	public void finish(IMemoryCopier uploader, IRenderBuffer target) {
+		target.update(uploader, this.vertexBuffers.stream().map((buffer) -> {
 			return IPair.of(buffer.format, new RenderBufferData(buffer.vertexCount, buffer.data.get()));
 		}).toList(), Optional.of(new RenderBufferData(this.indexCount, this.indices.get())));
 	}
 
 	@Override
-	public IRenderBuffer finish() {
+	public IRenderBuffer finish(IMemoryCopier uploader) {
 		if (this.getVertexCount() == 0) {
 			return EmptyRenderBuffer.INSTANCE;
 		}
 
-		IRenderBuffer renderBuffer = new IndexedRenderBuffer();
-		this.finish(renderBuffer);
+		IRenderBuffer renderBuffer = IRenderBuffer.withSize(this.indices.get().rewind().limit(), Type.STATIC);
+		
+		for(VertexBuffer buffer : this.vertexBuffers) {
+			ByteBuffer data = buffer.data.get()
+				.rewind();
+			
+			renderBuffer.withBuffer(buffer.format, data.limit(), Type.STATIC);
+		}
+		this.finish(uploader, renderBuffer);
 		return renderBuffer;
 	}
 

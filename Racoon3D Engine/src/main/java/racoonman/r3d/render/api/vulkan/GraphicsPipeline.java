@@ -20,7 +20,10 @@ import org.lwjgl.vulkan.VkPipelineRasterizationStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineRenderingCreateInfo;
 import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo;
 import org.lwjgl.vulkan.VkPipelineTessellationStateCreateInfo;
+import org.lwjgl.vulkan.VkPipelineVertexInputStateCreateInfo;
 import org.lwjgl.vulkan.VkPipelineViewportStateCreateInfo;
+import org.lwjgl.vulkan.VkVertexInputAttributeDescription;
+import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
@@ -36,11 +39,13 @@ import racoonman.r3d.render.api.vulkan.types.LogicOp;
 import racoonman.r3d.render.api.vulkan.types.PolygonMode;
 import racoonman.r3d.render.api.vulkan.types.SampleCount;
 import racoonman.r3d.render.api.vulkan.types.Topology;
+import racoonman.r3d.render.vertex.VertexFormat;
+import racoonman.r3d.render.vertex.VertexFormat.Attribute;
 import racoonman.r3d.resource.codec.ArrayCodec;
 import racoonman.r3d.resource.codec.ICodec;
 import racoonman.r3d.resource.codec.PrimitiveCodec;
 
-public class GraphicsPipeline implements IPipeline {
+class GraphicsPipeline implements IPipeline {
 	private Device device;
 	private IShaderProgram shaderProgram;
 	private PipelineLayout layout;
@@ -88,41 +93,132 @@ public class GraphicsPipeline implements IPipeline {
 					.module(shader.asLong())
 					.pName(stack.UTF8(shader.name()));
 			}
+			
+			VertexFormat[] formats = vertexInfo.formats();
+			VkVertexInputBindingDescription.Buffer bindings = VkVertexInputBindingDescription.calloc(formats.length, stack);
+			
+			int attribCount = 0;
+			
+			for(VertexFormat format : formats) {
+				attribCount += format.getAttributeCount();
+			}
+			
+			VkVertexInputAttributeDescription.Buffer attributes = VkVertexInputAttributeDescription.calloc(attribCount, stack);
+			
+			int location = 0;
+			
+			for(int i = 0; i < formats.length; i++) {
+				VertexFormat format = formats[i];
+				
+				bindings.get(i)
+					.binding(i)
+					.stride(format.getStride())
+					.inputRate(format.getInputRate().getVkType());
+				
+				int offset = 0;
+				
+				for(Attribute att : format.getAttributes()) {
+					attributes.get(location)
+						.binding(i)
+						.location(location)
+						.format(att.format().getVkType())
+						.offset(offset);
+					offset += att.size();
+					location++;
+				}
+			}
+			
+			VkPipelineVertexInputStateCreateInfo vertexStateInfo = VkPipelineVertexInputStateCreateInfo.calloc()
+				.sType$Default()	
+				.pVertexBindingDescriptions(bindings)
+				.pVertexAttributeDescriptions(attributes);
 
-			VkPipelineInputAssemblyStateCreateInfo assemblyStateInfo = VkPipelineInputAssemblyStateCreateInfo.calloc(stack).sType$Default().topology(assemblyInfo.topology().getVkTopology());
+			VkPipelineInputAssemblyStateCreateInfo assemblyStateInfo = VkPipelineInputAssemblyStateCreateInfo.calloc(stack)
+				.sType$Default()
+				.topology(assemblyInfo.topology().getVkType());
 
-			VkPipelineViewportStateCreateInfo viewportStateInfo = VkPipelineViewportStateCreateInfo.calloc(stack).sType$Default().viewportCount(viewportInfo.viewportCount()).scissorCount(viewportInfo.scissorCount());
+			VkPipelineViewportStateCreateInfo viewportStateInfo = VkPipelineViewportStateCreateInfo.calloc(stack)
+				.sType$Default()
+				.viewportCount(viewportInfo.viewportCount())
+				.scissorCount(viewportInfo.scissorCount());
 
-			VkPipelineRasterizationStateCreateInfo rasterizationStateInfo = VkPipelineRasterizationStateCreateInfo.calloc(stack).sType$Default().polygonMode(rasterizationInfo.polygonMode().getVkType()).cullMode(rasterizationInfo.cullMode().getVkType()).frontFace(rasterizationInfo.frontFace().getVkType()).lineWidth(rasterizationInfo.lineWidth());
+			VkPipelineRasterizationStateCreateInfo rasterizationStateInfo = VkPipelineRasterizationStateCreateInfo.calloc(stack)
+				.sType$Default()
+				.polygonMode(rasterizationInfo.polygonMode().getVkType())
+				.cullMode(rasterizationInfo.cullMode().getVkType())
+				.frontFace(rasterizationInfo.frontFace().getVkType())
+				.lineWidth(rasterizationInfo.lineWidth());
 
-			VkPipelineMultisampleStateCreateInfo multisampleStateInfo = VkPipelineMultisampleStateCreateInfo.calloc(stack).sType$Default().rasterizationSamples(multisampleInfo.sampleCount().getVkType());
+			VkPipelineMultisampleStateCreateInfo multisampleStateInfo = VkPipelineMultisampleStateCreateInfo.calloc(stack)
+				.sType$Default()
+				.rasterizationSamples(multisampleInfo.sampleCount().getVkType());
 
 			VkPipelineColorBlendAttachmentState.Buffer blendAttStateInfo = VkPipelineColorBlendAttachmentState.calloc(blendStateInfo.length, stack);
 
 			for (int i = 0; i < blendStateInfo.length; i++) {
 				BlendStateInfo blendInfo = blendStateInfo[i];
 
-				blendAttStateInfo.get(i).colorWriteMask(blendInfo.writeMask()).blendEnable(blendInfo.blendEnable()).colorBlendOp(blendInfo.colorBlendOp().getVkType()).srcColorBlendFactor(blendInfo.srcColorBlendFactor().getVkType()).dstColorBlendFactor(blendInfo.dstColorBlendFactor().getVkType()).alphaBlendOp(blendInfo.alphaBlendOp().getVkType()).srcAlphaBlendFactor(blendInfo.srcAlphaBlendFactor().getVkType()).dstAlphaBlendFactor(blendInfo.dstAlphaBlendFactor().getVkType());
+				blendAttStateInfo.get(i)
+					.colorWriteMask(blendInfo.writeMask())
+					.blendEnable(blendInfo.blendEnable())
+					.colorBlendOp(blendInfo.colorBlendOp().getVkType())
+					.srcColorBlendFactor(blendInfo.srcColorBlendFactor().getVkType())
+					.dstColorBlendFactor(blendInfo.dstColorBlendFactor().getVkType())
+					.alphaBlendOp(blendInfo.alphaBlendOp().getVkType())
+					.srcAlphaBlendFactor(blendInfo.srcAlphaBlendFactor().getVkType())
+					.dstAlphaBlendFactor(blendInfo.dstAlphaBlendFactor().getVkType());
 			}
 
-			VkPipelineColorBlendStateCreateInfo blendInfo = VkPipelineColorBlendStateCreateInfo.calloc(stack).sType$Default().logicOpEnable(blendAttachmentInfo.logicOpEnable()).logicOp(blendAttachmentInfo.logicOp().getVkType()).blendConstants(stack.floats(blendAttachmentInfo.blendConstants())).pAttachments(blendAttStateInfo);
+			VkPipelineColorBlendStateCreateInfo blendInfo = VkPipelineColorBlendStateCreateInfo.calloc(stack)
+				.sType$Default()
+				.logicOpEnable(blendAttachmentInfo.logicOpEnable())
+				.logicOp(blendAttachmentInfo.logicOp().getVkType())
+				.blendConstants(stack.floats(blendAttachmentInfo.blendConstants()))
+				.pAttachments(blendAttStateInfo);
 
-			VkPipelineDynamicStateCreateInfo dynamicInfo = VkPipelineDynamicStateCreateInfo.calloc(stack).sType$Default().pDynamicStates(stack.ints(dynamicStateInfo.dynamicStates()));
+			VkPipelineDynamicStateCreateInfo dynamicInfo = VkPipelineDynamicStateCreateInfo.calloc(stack)
+				.sType$Default()
+				.pDynamicStates(stack.ints(dynamicStateInfo.dynamicStates()));
 			
-			VkPipelineRenderingCreateInfo renderingCreateInfo = VkPipelineRenderingCreateInfo.calloc(stack).sType$Default().pColorAttachmentFormats(stack.ints(IVkType.asInts(renderingInfo.colorFormats))).colorAttachmentCount(renderingInfo.colorFormats.length).depthAttachmentFormat(renderingInfo.depthFormat.getVkType()).stencilAttachmentFormat(renderingInfo.stencilFormat.getVkType());
+			VkPipelineRenderingCreateInfo renderingCreateInfo = VkPipelineRenderingCreateInfo.calloc(stack)
+				.sType$Default()
+				.pColorAttachmentFormats(stack.ints(IVkType.asInts(renderingInfo.colorFormats)))
+				.colorAttachmentCount(renderingInfo.colorFormats.length)
+				.depthAttachmentFormat(renderingInfo.depthFormat.getVkType())
+				.stencilAttachmentFormat(renderingInfo.stencilFormat.getVkType());
 
-			VkGraphicsPipelineCreateInfo.Buffer pipeline = VkGraphicsPipelineCreateInfo.calloc(1, stack).sType$Default().pStages(stages).pVertexInputState(vertexInfo.getCreateInfo()).pInputAssemblyState(assemblyStateInfo).pViewportState(viewportStateInfo).pRasterizationState(rasterizationStateInfo).pMultisampleState(multisampleStateInfo).pColorBlendState(blendInfo).pDynamicState(dynamicInfo).layout(layout.asLong()).pNext(renderingCreateInfo);
+			VkGraphicsPipelineCreateInfo.Buffer pipelineInfo = VkGraphicsPipelineCreateInfo.calloc(1, stack)
+				.sType$Default()
+				.pStages(stages)
+				.pVertexInputState(vertexStateInfo)
+				.pInputAssemblyState(assemblyStateInfo)
+				.pViewportState(viewportStateInfo)
+				.pRasterizationState(rasterizationStateInfo)
+				.pMultisampleState(multisampleStateInfo)
+				.pColorBlendState(blendInfo)
+				.pDynamicState(dynamicInfo)
+				.layout(layout.asLong())
+				.pNext(renderingCreateInfo);
 
 			tessellationInfo.ifPresent((info) -> {
-				pipeline.pTessellationState(VkPipelineTessellationStateCreateInfo.calloc(stack).sType$Default().flags(info.flags()).patchControlPoints(info.patchControlPoints()));
+				pipelineInfo.pTessellationState(VkPipelineTessellationStateCreateInfo.calloc(stack)
+					.sType$Default()
+					.flags(info.flags())
+					.patchControlPoints(info.patchControlPoints()));
 			});
 
 			depthStencilInfo.ifPresent((info) -> {
-				pipeline.pDepthStencilState(VkPipelineDepthStencilStateCreateInfo.calloc(stack).sType$Default().depthTestEnable(info.depthTestEnable()).depthWriteEnable(info.depthWriteEnable()).depthCompareOp(info.depthCompareOp().getVkType()).depthBoundsTestEnable(info.depthBoundsTestEnable()).stencilTestEnable(info.stencilTestEnable()));
+				pipelineInfo.pDepthStencilState(VkPipelineDepthStencilStateCreateInfo.calloc(stack)
+					.sType$Default()
+					.depthTestEnable(info.depthTestEnable())
+					.depthWriteEnable(info.depthWriteEnable())
+					.depthCompareOp(info.depthCompareOp().getVkType())
+					.depthBoundsTestEnable(info.depthBoundsTestEnable())
+					.stencilTestEnable(info.stencilTestEnable()));
 			});
 			
 			LongBuffer pointer = stack.mallocLong(1);
-			vkAssert(vkCreateGraphicsPipelines(vkDevice, 0L, pipeline, null, pointer), "Error creating graphics pipelines");
+			vkAssert(vkCreateGraphicsPipelines(vkDevice, 0L, pipelineInfo, null, pointer), "Error creating graphics pipelines");
 			this.handle = pointer.get(0);
 		}
 	}
@@ -195,6 +291,8 @@ public class GraphicsPipeline implements IPipeline {
 		return this.handle;
 	}
 
+	//TODO remove all of these records
+	
 	public static record AssemblyInfo(Topology topology) {
 		public static final ICodec<AssemblyInfo> CODEC = ICodec.simple(Topology.ORDINAL_CODEC.fetch("topology", AssemblyInfo::topology), AssemblyInfo::new);
 	}
@@ -233,5 +331,9 @@ public class GraphicsPipeline implements IPipeline {
 
 	public static record RenderingInfo(Format[] colorFormats, Format depthFormat, Format stencilFormat) {
 		public static final ICodec<RenderingInfo> CODEC = ICodec.simple(ArrayCodec.of(Format.ORDINAL_CODEC, Format[]::new).fetch("color_formats", RenderingInfo::colorFormats), Format.ORDINAL_CODEC.fetch("depth_format", RenderingInfo::depthFormat), Format.ORDINAL_CODEC.fetch("stencil_format", RenderingInfo::stencilFormat), RenderingInfo::new);
+	}
+	
+	public static record VertexInfo(VertexFormat[] formats) {
+		public static final ICodec<VertexInfo> CODEC = ICodec.simple(ArrayCodec.of(VertexFormat.CODEC, VertexFormat[]::new).fetch("formats", VertexInfo::formats), VertexInfo::new);
 	}
 }

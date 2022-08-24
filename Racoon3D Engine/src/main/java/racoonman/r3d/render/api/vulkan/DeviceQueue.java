@@ -23,28 +23,28 @@ import org.lwjgl.vulkan.VkQueueFamilyProperties;
 import org.lwjgl.vulkan.VkSubmitInfo;
 
 import racoonman.r3d.core.R3DRuntime;
-import racoonman.r3d.render.api.vulkan.sync.VkFence;
-import racoonman.r3d.render.api.vulkan.sync.Semaphore;
+import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.vulkan.types.IVkType;
 import racoonman.r3d.render.api.vulkan.types.QueueFamily;
 import racoonman.r3d.util.Holder;
 
-public abstract class DeviceQueue {
+abstract class DeviceQueue {
+	private Device device;
 	private VkQueue queue;
 	private int queueFamilyIndex;
 	private int queueIndex;
 	
-	private DeviceQueue(Device logicalDevice, int queueIndex) {
+	private DeviceQueue(Device device, int queueIndex) {
 		try(MemoryStack stack = stackPush()) {
+			this.device = device;
 			this.queueFamilyIndex = this.getIndexForFamily();
 			this.queueIndex = queueIndex;
 			
-			VkDevice device = logicalDevice.get();
-			
+			VkDevice vkDevice = device.get();
 			PointerBuffer queuePointer = stack.mallocPointer(1);
-			vkGetDeviceQueue(device, this.queueFamilyIndex, queueIndex, queuePointer);
+			vkGetDeviceQueue(vkDevice, this.queueFamilyIndex, queueIndex, queuePointer);
 			long handle = queuePointer.get(0);
-			this.queue = new VkQueue(handle, device);
+			this.queue = new VkQueue(handle, vkDevice);
 		}
 	}
 	
@@ -77,6 +77,10 @@ public abstract class DeviceQueue {
 
 	public void waitIdle() {
 		vkQueueWaitIdle(this.queue);
+	}
+	
+	public Device getDevice() {
+		return this.device;
 	}
 	
 	public VkQueue get() {
@@ -116,7 +120,7 @@ public abstract class DeviceQueue {
 		};
 	}
 	
-	public static final DeviceQueue present(Device device, WindowSurface surface, int index) {
+	public static final DeviceQueue present(Device device, IWindowSurface surface, int index) {
 		return new DeviceQueue(device, index) {
 			
 			@Override

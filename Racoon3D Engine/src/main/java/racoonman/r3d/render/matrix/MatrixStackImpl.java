@@ -17,7 +17,7 @@ public class MatrixStackImpl implements IMatrixStack {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T get(IMatrixType<T> type) {
+	public <T> T getMatrix(IMatrixType<T> type) {
 		return (T) this.matrices.computeIfAbsent(type, (t) -> t.create(this.defaultSize));
 	}
 

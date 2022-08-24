@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import racoonman.r3d.render.api.objects.IShaderProgram;
-import racoonman.r3d.render.core.RenderService;
+import racoonman.r3d.render.core.Service;
 import racoonman.r3d.render.shader.ShaderCompiler;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.render.shader.ShaderCompiler.Result;
@@ -19,7 +19,7 @@ public class ShaderLoader {
 	private Map<String, IShaderProgram> shaderCache;
 	private Map<String, Result> resultCache;
 	
-	public ShaderLoader(RenderService service, IShaderProcessor shaderProcessor) {
+	public ShaderLoader(Service service, IShaderProcessor shaderProcessor) {
 		this.decoder = Decoders.forProgram(service);
 		this.shaderCache = new HashMap<>();
 		this.resultCache = new HashMap<>();

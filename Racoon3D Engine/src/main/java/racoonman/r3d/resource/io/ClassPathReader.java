@@ -1,5 +1,6 @@
 package racoonman.r3d.resource.io;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -95,7 +96,7 @@ public class ClassPathReader {
 
 			return path;
 		} else {
-			throw new IOException("Unable to locate path for " + location);
+			throw new FileNotFoundException("Unable to locate path for " + location);
 		}
 	}
 

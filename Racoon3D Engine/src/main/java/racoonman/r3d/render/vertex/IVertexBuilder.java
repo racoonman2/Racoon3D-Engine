@@ -7,17 +7,17 @@ import org.joml.Vector3f;
 import org.joml.Vector4i;
 
 import racoonman.r3d.render.buffer.IRenderBuffer;
+import racoonman.r3d.render.core.Driver;
+import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.util.Color;
 import racoonman.r3d.render.vertex.VertexFormat.Attribute;
 
 public interface IVertexBuilder extends AutoCloseable {
-	default IVertexBuilder begin(VertexFormat format) {
-		return this.begin(0, format);
+	default IVertexBuilder withBuffer(VertexFormat format) {
+		return this.withBuffer(format, 0);
 	}
 	
-	IVertexBuilder begin(int size, VertexFormat format);
-
-	IVertexBuilder begin(int index, int size, VertexFormat format);
+	IVertexBuilder withBuffer(VertexFormat format, int size);
 	
 	IVertexBuilder floats(Attribute attribute, float... floats);
 
@@ -41,7 +41,11 @@ public interface IVertexBuilder extends AutoCloseable {
 	
 	Matrix4f getTransform();
 
-	void finish(IRenderBuffer target);
+	default void finish(IRenderBuffer target) {
+		this.finish(Driver.getMemoryCopier(), target);
+	}
+	
+	void finish(IMemoryCopier uploader, IRenderBuffer target);
 
 	@Override
 	default void close() {
@@ -50,7 +54,11 @@ public interface IVertexBuilder extends AutoCloseable {
 	
 	void free();
 	
-	IRenderBuffer finish();
+	default IRenderBuffer finish() {
+		return this.finish(Driver.getMemoryCopier());
+	}
+	
+	IRenderBuffer finish(IMemoryCopier uploader);
 
 	default IVertexBuilder pos(float x, float y) {
 		return this.floats(Attribute.POSITION_2F, x, y);
@@ -167,6 +175,7 @@ public interface IVertexBuilder extends AutoCloseable {
 		public static final IVertexOrder TRIANGLE_CW = of(3, 0, 1, 2);
 		public static final IVertexOrder QUAD_CW = of(4, 0, 1, 2, 2, 3, 0);
 		public static final IVertexOrder QUAD_CCW = of(4, 0, 3, 2, 2, 1, 0);
+		public static final IVertexOrder LINE_LIST = of(2, 0, 1);
 		
 		int getVertexCount();
 		

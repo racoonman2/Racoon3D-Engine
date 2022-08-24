@@ -18,7 +18,7 @@ import racoonman.r3d.render.api.vulkan.types.Filter;
 import racoonman.r3d.render.api.vulkan.types.MipmapMode;
 import racoonman.r3d.render.natives.IHandle;
 
-public class Sampler implements IHandle {
+class Sampler implements IHandle {
 	private Device device;
 	private Filter magFilter;
 	private Filter minFilter;

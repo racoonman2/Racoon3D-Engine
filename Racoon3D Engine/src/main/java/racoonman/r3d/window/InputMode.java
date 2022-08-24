@@ -6,6 +6,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_RAW_MOUSE_MOTION;
 import static org.lwjgl.glfw.GLFW.GLFW_STICKY_KEYS;
 import static org.lwjgl.glfw.GLFW.GLFW_STICKY_MOUSE_BUTTONS;
 
+import racoonman.r3d.window.api.glfw.IGLFWType;
+
 public enum InputMode implements IGLFWType {
 	CURSOR(GLFW_CURSOR),
 	STICKY_KEYS(GLFW_STICKY_KEYS),

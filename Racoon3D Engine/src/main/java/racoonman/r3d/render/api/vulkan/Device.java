@@ -19,17 +19,17 @@ import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
-import racoonman.r3d.render.api.vulkan.memory.Allocator;
 import racoonman.r3d.render.natives.IHandle;
 
-//TODO add vkCreate* functions
-public class Device implements IHandle {
+class Device implements IHandle {
+	private Vulkan vulkan;
 	private VkDevice device;
 	private PhysicalDevice physicalDevice;
 	private Allocator memoryAllocator;
 	
 	public Device(Vulkan vulkan, PhysicalDevice physicalDevice, IDeviceExtension...extensions) {
 		try(MemoryStack stack = stackPush()) {
+			this.vulkan = vulkan;
 			this.physicalDevice = physicalDevice;
 	
 			PointerBuffer required = stack.mallocPointer(extensions.length);
@@ -71,6 +71,10 @@ public class Device implements IHandle {
 			
 			this.memoryAllocator = new Allocator(vulkan, physicalDevice, this);
 		}
+	}
+	
+	public Vulkan getVulkan() {
+		return this.vulkan;
 	}
 	
 	public VkPhysicalDeviceFeatures2 getFeatures() {

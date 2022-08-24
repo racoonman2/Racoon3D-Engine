@@ -20,7 +20,7 @@ import io.github.douira.glsl_transformer.ast.transform.ASTInjectionPoint;
 import io.github.douira.glsl_transformer.util.Type;
 import racoonman.r3d.render.shader.parsing.IShaderProcessor;
 
-public class VkShaderProcessor implements IShaderProcessor {
+class VkShaderProcessor implements IShaderProcessor {
 	private static final String PV_BLOCK_NAME = "R3DPV"; // projection & view matrices are stored in ubo
 	private static final String MN_BLOCK_NAME = "R3DMN";   // model & normal matrices are stored in push constants
 	private static final String PV_BLOCK_VARIABLE_NAME = "r3d_pv";

@@ -2,12 +2,12 @@ package racoonman.r3d.render.api.vulkan;
 
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.TextureState;
-import racoonman.r3d.render.api.vulkan.Image.ImageBuilder;
 import racoonman.r3d.render.api.vulkan.ImageView.ImageViewBuilder;
+import racoonman.r3d.render.api.vulkan.VkImage.ImageBuilder;
 import racoonman.r3d.render.api.vulkan.types.Format;
 import racoonman.r3d.render.api.vulkan.types.ImageUsage;
 import racoonman.r3d.render.api.vulkan.types.ViewType;
-import racoonman.r3d.util.Util;
+import racoonman.r3d.util.ArrayUtil;
 
 class VkAttachment implements IAttachment {
 	protected int width;
@@ -27,24 +27,24 @@ class VkAttachment implements IAttachment {
 	public VkAttachment(int width, int height, int layers, Format format, ViewType viewType, ImageUsage[] usage, TextureState state, Device device) {
 		this(ImageViewBuilder.create()
 			.format(format)
-			.aspectMask(VkUtils.getAspect(usage).getVkType())
+			.aspects(VkUtils.getAspect(usage))
 			.image(ImageBuilder.create()
 				.width(width)
 				.height(height)
-				.usage(Util.add(usage, ImageUsage.SAMPLED, ImageUsage[]::new))
+				.usage(ArrayUtil.add(usage, ImageUsage.SAMPLED))
 				.format(format)
 				.arrayLayers(layers)
 				.build(device))
 			.viewType(viewType)
 			.layerCount(layers)
-			.build(device), state, device);
+			.build(device), state);
 	}
 
-	public VkAttachment(ImageView imageView, Device device) {
-		this(imageView, TextureState.DEFAULT.copy(), device);
+	public VkAttachment(ImageView imageView) {
+		this(imageView, TextureState.DEFAULT.copy());
 	}
 	
-	public VkAttachment(ImageView imageView, TextureState state, Device device) {
+	public VkAttachment(ImageView imageView, TextureState state) {
 		this.width = imageView.getWidth();
 		this.height = imageView.getHeight();
 		this.layers = imageView.getLayerCount();
@@ -53,8 +53,8 @@ class VkAttachment implements IAttachment {
 		this.usage = imageView.getUsage();
 		this.format = imageView.getFormat();
 		this.state = state;
-		this.device = device;
 		this.imageView = imageView;
+		this.device = imageView.getDevice();
 	}
 	
 	@Override
@@ -88,10 +88,39 @@ class VkAttachment implements IAttachment {
 	}
 	
 	@Override
-	public IAttachment copy() {
-		return new VkAttachment(this.width, this.height, this.layers, this.format, this.viewType, this.usage, this.state.copy(), this.device);
+	public IAttachment makeChild(int newWidth, int newHeight) {
+		return new VkAttachment(newWidth, newHeight, this.layers, this.format, this.viewType, this.usage, this.state.copy(), this.device);
 	}
 
+	@Override
+	public long getHandle() {
+		return this.imageView.getImage().getHandle();
+	}
+
+	@Override
+	public ImageUsage[] getUsage() {
+		return this.imageView.getUsage();
+	}
+
+	@Override
+	public int getLayers() {
+		return this.imageView.getLayerCount();
+	}
+
+	@Override
+	public int getMipLevels() {
+		return this.imageView.getMipLevels();
+	}
+	
+	//TODO
+	 /* this only compares formats because thats all that matters to the pipeline cache, however this ignores cases where it would actually be helpful to have a true comparison,
+	 *  so the pipeline cache should use a different method for comparing attachments instead
+	 */
+	@Override
+	public boolean equals(Object o) {
+		return o == this ? true : o instanceof IAttachment other && other.getFormat().equals(this.format);
+	}
+	
 	@Override
 	public void free() {
 		this.imageView.free();

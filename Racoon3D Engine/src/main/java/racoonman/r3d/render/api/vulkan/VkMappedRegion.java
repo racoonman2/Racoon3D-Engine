@@ -1,22 +1,21 @@
 package racoonman.r3d.render.api.vulkan;
 
 import java.nio.ByteBuffer;
-import java.util.OptionalLong;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.objects.IMappedMemoryRegion;
+import racoonman.r3d.render.api.objects.IMappedMemory;
 import racoonman.r3d.render.api.vulkan.types.BufferUsage;
-import racoonman.r3d.render.core.RenderService;
+import racoonman.r3d.render.api.vulkan.types.Property;
+import racoonman.r3d.render.core.Service;
+import racoonman.r3d.render.core.Driver;
+import racoonman.r3d.render.memory.Allocation;
 
-//TODO
-public class VkMappedRegion implements IMappedMemoryRegion {
-	private RenderService service;
+class VkMappedRegion implements IMappedMemory {
 	private IDeviceBuffer buffer;
 	private long offset;
 	
-	public VkMappedRegion(RenderService service, long initialSize) {
-		this.service = service;
-		this.buffer = service.allocate(initialSize, BufferUsage.TRANSFER_SRC);
+	public VkMappedRegion(Service service, long initialSize) {
+		this.buffer = service.allocate(initialSize, new BufferUsage[] { BufferUsage.TRANSFER_SRC}, new Property[] { Property.HOST_VISIBLE, Property.HOST_COHERENT });
 		this.buffer.map();
 	}
 	
@@ -32,17 +31,17 @@ public class VkMappedRegion implements IMappedMemoryRegion {
 	}
 	
 	private void grow(long amount) {
-		IDeviceBuffer newBuffer = this.service.allocate(this.buffer.size() + amount, BufferUsage.TRANSFER_SRC);
-		newBuffer.map();
-		newBuffer.asByteBuffer().put(this.buffer.asByteBuffer());
-		this.buffer.unmap();
-		this.service.free(this.buffer);
-		this.buffer = newBuffer;
-	}
-	
-	private OptionalLong findEmpty() {
-		
-		return OptionalLong.empty();
+		if(this.offset + amount > this.buffer.size()) {
+			IDeviceBuffer newBuffer = Allocation.ofSize(this.buffer.size() + amount)
+				.withUsage(BufferUsage.TRANSFER_SRC)
+				.withProperties(Property.HOST_VISIBLE, Property.HOST_COHERENT)
+				.allocate();
+			newBuffer.map();
+			newBuffer.asByteBuffer().put(this.buffer.asByteBuffer());
+			this.buffer.unmap();
+			Driver.free(this.buffer);
+			this.buffer = newBuffer;
+		}
 	}
 	
 	class ChildBuffer implements IDeviceBuffer {
@@ -64,9 +63,15 @@ public class VkMappedRegion implements IMappedMemoryRegion {
 			//NOOP; parent buffer is persistently mapped
 		}
 
+
+		@Override
+		public boolean isHostVisible() {
+			return VkMappedRegion.this.buffer.isHostVisible();
+		}
+
 		@Override
 		public boolean isMapped() {
-			return true;
+			return VkMappedRegion.this.buffer.isMapped();
 		}
 
 		@Override

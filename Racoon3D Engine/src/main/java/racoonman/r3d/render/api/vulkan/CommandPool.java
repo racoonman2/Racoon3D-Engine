@@ -18,7 +18,7 @@ import racoonman.r3d.render.api.vulkan.types.Level;
 import racoonman.r3d.render.api.vulkan.types.SubmitMode;
 import racoonman.r3d.render.natives.IHandle;
 
-public class CommandPool implements IHandle {
+class CommandPool implements IHandle {
 	private Device device;
 	private long handle;
 	

@@ -1,11 +1,11 @@
 package racoonman.r3d.render.resource;
 
-import racoonman.r3d.render.api.vulkan.ITexture;
-import racoonman.r3d.render.core.RenderService;
+import racoonman.r3d.render.api.objects.ITexture;
+import racoonman.r3d.render.core.Service;
 
 public class TextureLoader {
 	
-	public TextureLoader(RenderService service) {
+	public TextureLoader(Service service) {
 		
 	}
 	

@@ -26,10 +26,9 @@ import org.lwjgl.vulkan.VkLayerProperties;
 import com.google.common.collect.ImmutableList;
 
 import racoonman.r3d.core.util.Version;
-import racoonman.r3d.render.debug.DebugMessengerUtils;
 import racoonman.r3d.render.natives.IHandle;
 
-public class Vulkan implements IHandle {
+class Vulkan implements IHandle {
 	private VkInstance instance;
 	private Version apiVersion;
 	private Version engineVersion;

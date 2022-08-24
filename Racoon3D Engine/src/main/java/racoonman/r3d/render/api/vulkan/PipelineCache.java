@@ -10,7 +10,7 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkPipelineCacheCreateInfo;
 
-public class PipelineCache {
+class PipelineCache {
 	private Device device;
 	private long handle;
 

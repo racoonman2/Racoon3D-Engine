@@ -10,7 +10,7 @@ public class EnumCodec {
 
 			@Override
 			public IElement encode(T t) {
-				return PrimitiveCodec.STRING.encode(t.name().toLowerCase());
+				return PrimitiveCodec.STRING.encode(t.name());
 			}
 
 			@Override
@@ -34,5 +34,4 @@ public class EnumCodec {
 			}
 		};
 	}
-	
 }

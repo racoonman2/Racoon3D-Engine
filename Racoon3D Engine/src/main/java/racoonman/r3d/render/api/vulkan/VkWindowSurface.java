@@ -1,66 +1,65 @@
 package racoonman.r3d.render.api.vulkan;
 
-import racoonman.r3d.render.api.objects.IFramebuffer;
+import static org.lwjgl.glfw.GLFWVulkan.glfwCreateWindowSurface;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.KHRSurface.vkDestroySurfaceKHR;
+import static racoonman.r3d.render.api.vulkan.VkUtils.vkAssert;
+
+import java.nio.LongBuffer;
+
+import org.lwjgl.system.MemoryStack;
+
+import racoonman.r3d.render.api.objects.ISwapchain;
 import racoonman.r3d.render.api.objects.IWindowSurface;
-import racoonman.r3d.render.core.RenderSystem;
-import racoonman.r3d.window.Window;
+import racoonman.r3d.render.api.vulkan.types.PresentMode;
+import racoonman.r3d.window.api.glfw.Window;
 
-//FIXME present semaphore doesn't get signaled when surface is invalid
-public class VkWindowSurface implements IWindowSurface {
-	private Device device;
+class VkWindowSurface implements IWindowSurface {
+	private Vulkan vulkan;
 	private Window window;
-	private WindowSurface surface;
+	private long handle;
 	private DeviceQueue presentQueue;
-	private SwapChain swapChain;
-	private VkWindowFramebuffer target;
-	private boolean resized;
 	
-	public VkWindowSurface(Device device, Vulkan vulkan, Window window, int queueIndex) {
-		this.device = device;
-		this.window = window;
-		this.surface = new WindowSurface(vulkan, window);
-		this.presentQueue = DeviceQueue.present(device, this.surface, queueIndex);
-		this.swapChain = new SwapChain(device, window, this.surface, window.getFrameCount());
-		this.target = new VkWindowFramebuffer(device, this.swapChain, this.presentQueue);
-	}
-	
-	@Override
-	public boolean acquire() {
-		boolean resized = false;
-		for(int i = 0; i < this.window.getFrameCount() && this.isValid() && (this.resized || this.target.next()); i++) {
-			this.resize();
-			resized = true;
-			this.resized = false;
-		}
-		return resized;
-	}
-	
-	public boolean present() {
-		return this.isValid() && (this.resized = this.target.present());
-	}
-
-	@Override
-	public IFramebuffer getFramebuffer() {
-		return this.target;
-	}
-
-	@Override
-	public boolean isValid() {
-		return this.window.getWidth() > 0 && this.window.getHeight() > 0;
-	}
-
-	private void resize() {
-		if(this.isValid()) {
-			SwapChain oldSwapchain = this.swapChain;
-			IFramebuffer oldTarget = this.target;
+	public VkWindowSurface(Device device, Window window, int queueIndex) {
+		try(MemoryStack stack = stackPush()) {
+			this.vulkan = device.getVulkan();
+			this.window = window;
 			
-			this.swapChain = new SwapChain(this.swapChain);
-			this.target = new VkWindowFramebuffer(this.device, this.swapChain, this.presentQueue);
+			LongBuffer buffer = stack.mallocLong(1);
+			vkAssert(glfwCreateWindowSurface(this.vulkan.get(), window.asLong(), null, buffer), "Error creating window surface");
+			this.handle = buffer.get(0);
 			
-			RenderSystem.free(() -> {
-				oldSwapchain.free();
-				oldTarget.free();
-			});
+			this.presentQueue = DeviceQueue.present(device, this, queueIndex);
 		}
+	}
+
+	@Override
+	public ISwapchain makeSwapchain(int frameCount) {
+		return new VkSwapchain(this, this.presentQueue, frameCount);
+	}
+
+	@Override
+	public int getWidth() {
+		return this.window.getWidth();
+	}
+
+	@Override
+	public int getHeight() {
+		return this.window.getHeight();
+	}
+
+	@Override
+	public PresentMode getPresentMode() {
+		return this.window.getPresentMode();
+	}
+		
+	@Override
+	public long asLong() {
+		return this.handle;
+	}
+
+	@Override
+	public void free() {
+		vkDestroySurfaceKHR(this.vulkan.get(), this.handle, null);
 	}
 }

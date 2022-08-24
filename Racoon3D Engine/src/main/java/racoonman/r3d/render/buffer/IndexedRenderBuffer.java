@@ -1,13 +1,11 @@
 package racoonman.r3d.render.buffer;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.vulkan.types.BufferUsage;
-import racoonman.r3d.render.core.RenderSystem;
+import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.vertex.RenderBufferData;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
@@ -16,41 +14,37 @@ public class IndexedRenderBuffer extends RenderBufferImpl {
 	private IDeviceBuffer indexBuffer;
 	private int indexCount;
 	
+	public IndexedRenderBuffer() {
+	}
+	
+	public IndexedRenderBuffer(IDeviceBuffer indexBuffer) {
+		this.indexBuffer = indexBuffer;
+	}
+	
 	@Override
-	public void draw(RenderContext context, int instanceCount) {
+	public void draw(Context context, int instanceCount) {
 		this.bind(context);
 		
 		context.drawIndexed(instanceCount, 0, 0, this.indexCount);
 	}
 
 	@Override
-	public void bind(RenderContext context) {
+	public void bind(Context context) {
 		super.bind(context);
 		
 		context.bindIndexBuffer(this.indexBuffer);
 	}
 
 	@Override
-	public void update(List<IPair<VertexFormat, RenderBufferData>> vertexBuffers, Optional<RenderBufferData> indexBuffer) {
-		super.update(vertexBuffers, indexBuffer);
+	public void update(IMemoryCopier uploader,List<IPair<VertexFormat, RenderBufferData>> vertexBuffers, Optional<RenderBufferData> indexBuffer) {
+		super.update(uploader, vertexBuffers, indexBuffer);
 
 		indexBuffer.ifPresent((buffer) -> {
-			if(this.indexBuffer != null) {
-				RenderSystem.free(this.indexBuffer);
-			}
-			
 			this.indexCount = buffer.elements();
-			ByteBuffer data = buffer.data();
-			
-			this.indexBuffer = UploadUtil.upload(data, BufferUsage.INDEX_BUFFER, BufferUsage.TRANSFER_DST);
+			UploadUtil.upload(uploader, buffer.data().rewind(), this.indexBuffer);
 		});
 	}
-
-	@Override
-	public IRenderBuffer sub() {
-		return null;
-	}
-
+	
 	@Override
 	public void free() {
 		this.indexBuffer.free();

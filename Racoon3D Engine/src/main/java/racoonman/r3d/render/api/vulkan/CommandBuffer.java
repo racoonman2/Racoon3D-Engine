@@ -1,6 +1,7 @@
 package racoonman.r3d.render.api.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.vulkan.KHRPushDescriptor.vkCmdPushDescriptorSetKHR;
 import static org.lwjgl.vulkan.VK10.VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 import static org.lwjgl.vulkan.VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -14,16 +15,17 @@ import static org.lwjgl.vulkan.VK10.vkCmdCopyBuffer;
 import static org.lwjgl.vulkan.VK10.vkCmdDraw;
 import static org.lwjgl.vulkan.VK10.vkCmdDrawIndexed;
 import static org.lwjgl.vulkan.VK10.vkCmdPipelineBarrier;
+import static org.lwjgl.vulkan.VK10.vkCmdPushConstants;
 import static org.lwjgl.vulkan.VK10.vkCmdSetScissor;
 import static org.lwjgl.vulkan.VK10.vkCmdSetViewport;
 import static org.lwjgl.vulkan.VK10.vkEndCommandBuffer;
 import static org.lwjgl.vulkan.VK10.vkFreeCommandBuffers;
 import static org.lwjgl.vulkan.VK10.vkResetCommandBuffer;
 import static org.lwjgl.vulkan.VK13.vkCmdBeginRendering;
-import static org.lwjgl.vulkan.VK13.*;
-import static org.lwjgl.vulkan.KHRPushDescriptor.*;
+import static org.lwjgl.vulkan.VK13.vkCmdEndRendering;
 import static racoonman.r3d.render.api.vulkan.VkUtils.vkAssert;
 
+import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 import org.lwjgl.PointerBuffer;
@@ -50,7 +52,7 @@ import racoonman.r3d.render.api.vulkan.types.Level;
 import racoonman.r3d.render.api.vulkan.types.SubmitMode;
 import racoonman.r3d.render.natives.IHandle;
 
-public class CommandBuffer implements IHandle {
+class CommandBuffer implements IHandle {
 	private CommandPool pool;
 	private SubmitMode usage;
 	private VkCommandBuffer buffer;
@@ -174,6 +176,10 @@ public class CommandBuffer implements IHandle {
 	
 	public void pushDescriptor(BindPoint bindPoint, PipelineLayout layout, int set, VkWriteDescriptorSet.Buffer writes) {
 		vkCmdPushDescriptorSetKHR(this.buffer, bindPoint.getVkType(), layout.asLong(), set, writes);
+	}
+	
+	public void pushConstants(PipelineLayout layout, int flags, int offset, ByteBuffer data) {
+		vkCmdPushConstants(this.buffer, layout.asLong(), flags, offset, data);
 	}
 	
 	public static record VertexBuffer(IDeviceBuffer buffer, long offset) {		

@@ -91,6 +91,9 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_WORLD_1;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_WORLD_2;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_X;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_Y;
+
+import racoonman.r3d.window.api.glfw.Window;
+
 import static org.lwjgl.glfw.GLFW.*;
 
 public enum Key implements IAction {

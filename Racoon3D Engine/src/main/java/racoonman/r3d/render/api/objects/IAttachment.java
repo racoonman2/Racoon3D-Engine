@@ -1,7 +1,9 @@
 package racoonman.r3d.render.api.objects;
 
-import racoonman.r3d.render.api.vulkan.ITexture;
-
 public interface IAttachment extends ITexture {
-	IAttachment copy();
+	IAttachment makeChild(int newWidth, int newHeight);
+	
+	default IAttachment makeChild() {
+		return this.makeChild(this.getWidth(), this.getHeight());
+	}
 }
