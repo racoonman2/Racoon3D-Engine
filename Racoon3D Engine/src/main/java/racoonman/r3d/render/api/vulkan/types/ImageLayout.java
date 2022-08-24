@@ -25,7 +25,7 @@ public enum ImageLayout implements IVkType {
 	TRANSFER_SRC_OPTIMAL(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL),
 	TRANSFER_DST_OPTIMAL(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL),
 	PREINIT(VK_IMAGE_LAYOUT_PREINITIALIZED),
-	PRESENT_SRC_KHR(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+	PRESENT(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 	public static final ICodec<ImageLayout> ORDINAL_CODEC = EnumCodec.byOrdinal(values());
 	public static final ICodec<ImageLayout> NAME_CODEC = EnumCodec.byName(ImageLayout::valueOf);

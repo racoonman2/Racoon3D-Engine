@@ -22,7 +22,7 @@ public record Color(int red, int green, int blue, int alpha) {
 	}
 	
 	public static Color rgb(int r, int g, int b) {
-		return new Color(r, g, b, 255);
+		return rgba(r, g, b, 255);
 	}
 	
 	public static Color rgba(int r, int g, int b, int a) {

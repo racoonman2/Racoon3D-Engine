@@ -1,34 +1,22 @@
 package racoonman.r3d.render.api.vulkan;
 
+import racoonman.r3d.render.Context;
+
 class VkOffscreenFramebuffer extends VkFramebuffer {
-	private int index;
-	private int frameCount;
 	
 	VkOffscreenFramebuffer(Device device, int width, int height, int frameCount) {
-		super(width, height);
-		
-		this.frameCount = frameCount;
-		this.frames = new VkFrame[this.frameCount]; {
-			for(int i = 0; i < this.frameCount; i++) {
-				this.frames[i] = new VkFrame(device);
-			}
-		}
+		super(device, width, height, frameCount);
 	}
 
 	@Override
-	public boolean next() {
-		this.index %= this.frames.length;
-		return false;
-	}
-
-	@Override
-	int getIndex() {
-		return this.index;
+	public void onRenderStart(Context context) {
+	//TODO context.signal(this.frames[this.frameIndex].getFinished());
 	}
 	
 	@Override
-	public void free() {
-		// TODO
+	public boolean acquire() {
+		this.frameIndex %= this.frames.length;
+		return false;
 	}
 }
 

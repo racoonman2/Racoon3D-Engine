@@ -1,77 +1,93 @@
 package racoonman.r3d.window;
 
-import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_DISABLED;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
 import java.nio.DoubleBuffer;
 
 import org.lwjgl.system.MemoryStack;
 
-import racoonman.r3d.render.config.Config;
+import racoonman.r3d.window.api.glfw.Window;
 
 public class Mouse extends InputListener<MouseButton> {
-	private boolean mouseLocked;
+	private boolean locked;
+	private double sensitivity;
 
-	private double xPos;
-	private double yPos;
 	private double prevX;
 	private double prevY;
 	private double deltaX;
 	private double deltaY;
-	
+
 	public Mouse(Window window) {
 		super(window);
-	}
-	
-	public void tick() {
-    	try(MemoryStack stack = stackPush()) {
-    		super.tick();
 
-    		DoubleBuffer x = stack.mallocDouble(1);
-    		DoubleBuffer y = stack.mallocDouble(1);
-    		
-    		this.window.getCursorPos(x, y);
-            
-            this.xPos = x.get(0);
-            this.yPos = y.get(0);
-        
-        	this.deltaX = this.xPos - this.prevX;
-			this.deltaY = this.yPos - this.prevY;
+		this.sensitivity = 0.1D;
+	}
+
+	public void tick() {
+		try (MemoryStack stack = stackPush()) {
+			super.tick();
+
+			if(this.window.isPressed(MouseButton.LEFT)) {
+				this.window.focus();
+			}
 			
-			this.prevX = this.xPos; 
-			this.prevY = this.yPos;
-	        
-			if(!this.mouseLocked) {
-				this.mouseLocked = true;
+			if (this.window.isFocused()) {
+				if(!this.locked) {
+					this.locked = true;
+					int centerX = this.window.getWidth() / 2;
+					int centerY = this.window.getHeight() / 2;
+	
+					this.window.setInputMode(InputMode.CURSOR, Cursor.DISABLED);
+					this.window.setCursorPos(centerX, centerY);
+					
+					this.prevX = centerX;
+					this.prevY = centerY;
+				}
+			} else {
+				this.locked = false;
 				int centerX = this.window.getWidth() / 2;
 				int centerY = this.window.getHeight() / 2;
-				
-				this.window.setInputMode(GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+				this.window.setInputMode(InputMode.CURSOR, Cursor.NORMAL);	
 				this.window.setCursorPos(centerX, centerY);
 				
 				this.prevX = centerX;
 				this.prevY = centerY;
-				
-				this.xPos = centerX;
-				this.yPos = centerY;
+			}
+
+			if(this.locked) {
+				DoubleBuffer x = stack.mallocDouble(1);
+				DoubleBuffer y = stack.mallocDouble(1);
+
+				this.window.getCursorPos(x, y);
+				double xPos = x.get(0);
+				double yPos = y.get(0);
+	
+				this.deltaX = xPos - this.prevX;
+				this.deltaY = yPos - this.prevY;
+	
+				this.prevX = xPos;
+				this.prevY = yPos;
+			} else {
+				this.deltaX = 0.0D;
+				this.deltaY = 0.0D;
 			}
 		}
 	}
-	
-	public double getXPos() {
-		return this.xPos;
-	}
-	
-	public double getYPos() {
-		return this.yPos;
-	}
-	
+
 	public double getDeltaX() {
-		return this.deltaX * Config.mouseSensitivity;
+		return this.deltaX * this.sensitivity;
 	}
-	
+
 	public double getDeltaY() {
-		return this.deltaY * Config.mouseSensitivity;
+		return this.deltaY * this.sensitivity;
+	}
+
+	public double getSensitivity() {
+		return this.sensitivity;
+	}
+
+	public void setSensitivity(double sensitivity) {
+		this.sensitivity = sensitivity;
 	}
 }

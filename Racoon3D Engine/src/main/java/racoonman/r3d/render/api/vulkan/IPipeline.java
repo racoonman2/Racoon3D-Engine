@@ -5,7 +5,7 @@ import static org.lwjgl.vulkan.VK10.vkDestroyPipeline;
 import racoonman.r3d.render.api.vulkan.types.BindPoint;
 import racoonman.r3d.render.natives.IHandle;
 
-public interface IPipeline extends IHandle {
+interface IPipeline extends IHandle {
 	
 	@Override
 	default void free() {

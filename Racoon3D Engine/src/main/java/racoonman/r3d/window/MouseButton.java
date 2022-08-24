@@ -13,6 +13,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
+import racoonman.r3d.window.api.glfw.Window;
+
 public enum MouseButton implements IAction {
 	BUTTON_1(GLFW_MOUSE_BUTTON_1),
 	BUTTON_2(GLFW_MOUSE_BUTTON_2),

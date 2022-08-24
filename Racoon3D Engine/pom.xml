@@ -104,6 +104,11 @@
 	</dependency>
 	<dependency>
 		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-tinyfd</artifactId>
+		<classifier>natives-windows</classifier>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
 		<artifactId>lwjgl-vulkan</artifactId>
 	</dependency>
 	<dependency>
@@ -120,6 +125,15 @@
   	  <groupId>io.github.douira</groupId>
   	  <artifactId>glsl-transformer</artifactId>
   	  <version>1.0.0-pre11</version>
+	</dependency>
+	<dependency>
+	  <groupId>org.lwjgl</groupId>
+	  <artifactId>lwjgl-tinyfd</artifactId>
+	</dependency>
+	<dependency>
+      <groupId>it.unimi.dsi</groupId>
+ 	  <artifactId>fastutil-core</artifactId>
+  	  <version>8.5.8</version>
 	</dependency>
   </dependencies>
 </project>

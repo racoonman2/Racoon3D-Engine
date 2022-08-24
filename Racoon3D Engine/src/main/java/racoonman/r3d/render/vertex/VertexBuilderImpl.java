@@ -1,7 +1,6 @@
 package racoonman.r3d.render.vertex;
 
 import static org.lwjgl.system.MemoryUtil.memAlloc;
-import static org.lwjgl.system.MemoryUtil.memCopy;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
 import java.nio.ByteBuffer;
@@ -13,7 +12,8 @@ import org.joml.Matrix4f;
 
 import racoonman.r3d.render.buffer.EmptyRenderBuffer;
 import racoonman.r3d.render.buffer.IRenderBuffer;
-import racoonman.r3d.render.buffer.RenderBufferImpl;
+import racoonman.r3d.render.buffer.IRenderBuffer.Type;
+import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.util.buffer.IGrowableBuffer;
 import racoonman.r3d.render.util.buffer.IResizer;
 import racoonman.r3d.render.vertex.VertexFormat.Attribute;
@@ -22,50 +22,29 @@ import racoonman.r3d.util.IPair;
 public class VertexBuilderImpl implements IVertexBuilder {
 	protected List<VertexBuffer> vertexBuffers;
 	protected IVertexOrder vertexOrder;
-	protected boolean deferVertexUploads;
 	private int currentBuffer;
 	private int primaryBuffer;
 
-	public VertexBuilderImpl(IVertexOrder vertexOrder) {
-		this(vertexOrder, true);
-	}
-	
-	protected VertexBuilderImpl(IVertexOrder vertexOrder, boolean deferVertexUploads) {
+	protected VertexBuilderImpl(IVertexOrder vertexOrder) {
 		this.vertexBuffers = new ArrayList<>();
 		this.vertexOrder = vertexOrder;
-		this.deferVertexUploads = deferVertexUploads;
 
 		this.order(vertexOrder);
 	}
 
 	@Override
-	public IVertexBuilder begin(int size, VertexFormat format) {
+	public IVertexBuilder withBuffer(VertexFormat format, int size) {
 		this.vertexBuffers.add(new VertexBuffer(size, format));
 		this.currentBuffer = this.vertexBuffers.size() - 1;
 		return this;
 	}
 	
 	@Override
-	public IVertexBuilder begin(int index, int size, VertexFormat format) {
-		this.vertexBuffers.set(index, new VertexBuffer(size, format));
-		this.currentBuffer = this.vertexBuffers.size() - 1;
-		return this;
-	}
-	
-	@Override
 	public IVertexBuilder floats(Attribute attribute, float... floats) {
-		if(this.deferVertexUploads) {
-			for(float f : floats) {
-				this.getCurrent().getVertex().buffer.putFloat(f);
-			}
+		this.checkAndGrow(attribute, floats.length * attribute.size());
 			
-			this.checkAndGrow(attribute, floats.length * attribute.size());
-		} else {
-			this.checkAndGrow(attribute, floats.length * attribute.size());
-			
-			for (float f : floats) {
-				this.buffer().get().putFloat(f);
-			}	
+		for (float f : floats) {
+			this.buffer().get().putFloat(f);
 		}
 		
 		return this;
@@ -100,21 +79,6 @@ public class VertexBuilderImpl implements IVertexBuilder {
 	}
 
 	protected void autofill() {
-		if(this.deferVertexUploads) {
-			for(int index : this.vertexOrder.getOrder()) {
-				VertexBuffer current = this.getCurrent();
-				
-				for(int i = 0; i < current.vertices.length; i++) {
-					Vertex vertex = current.vertices[index];
-					current.data.grow(vertex.buffer.limit());
-					memCopy(vertex.buffer, current.data.get());
-					vertex.buffer.rewind();
-				}
-				
-				current.vertexIndex = 0;
-				current.vertexCount += this.vertexOrder.getVertexCount();
-			}
-		}
 	}
 	
 	@Override
@@ -166,21 +130,29 @@ public class VertexBuilderImpl implements IVertexBuilder {
 	}
 
 	@Override
-	public void finish(IRenderBuffer target) {
-		target.update(this.vertexBuffers.stream().map((buffer) -> {
+	public void finish(IMemoryCopier uploader, IRenderBuffer target) {
+		target.update(uploader, this.vertexBuffers.stream().map((buffer) -> {
 			return IPair.of(buffer.format, new RenderBufferData(buffer.vertexCount, buffer.data.get()));
 		}).toList(), Optional.empty());
 	}
 
 	// FIXME Empty secondary buffers will still throw an exception
 	@Override
-	public IRenderBuffer finish() {
+	public IRenderBuffer finish(IMemoryCopier uploader) {
 		if (this.getVertexCount() == 0) {
 			return EmptyRenderBuffer.INSTANCE;
 		}
 
-		IRenderBuffer renderBuffer = new RenderBufferImpl();
-		this.finish(renderBuffer);
+		IRenderBuffer renderBuffer = IRenderBuffer.withSize();
+		
+		for(VertexBuffer buffer : this.vertexBuffers) {
+			ByteBuffer data = buffer.data.get()
+				.rewind();
+			
+			renderBuffer.withBuffer(buffer.format, data.limit(), Type.STATIC);
+		}
+		
+		this.finish(uploader, renderBuffer);
 		return renderBuffer;
 	}
 

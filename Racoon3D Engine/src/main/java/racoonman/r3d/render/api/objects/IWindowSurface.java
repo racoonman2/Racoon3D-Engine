@@ -1,12 +1,14 @@
 package racoonman.r3d.render.api.objects;
 
-//Note: this is not the same as glfw's window surface
-public interface IWindowSurface {
-	boolean acquire();
+import racoonman.r3d.render.api.vulkan.types.PresentMode;
+import racoonman.r3d.render.natives.IHandle;
+
+public interface IWindowSurface extends IHandle {
+	ISwapchain makeSwapchain(int frameCount);
 	
-	boolean present();
+	int getWidth();
 	
-	boolean isValid();
+	int getHeight();
 	
-	IFramebuffer getFramebuffer();
+	PresentMode getPresentMode();
 }

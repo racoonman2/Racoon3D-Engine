@@ -22,7 +22,7 @@ import racoonman.r3d.resource.codec.ICodec;
 import racoonman.r3d.resource.codec.IField;
 import racoonman.r3d.resource.codec.PrimitiveCodec;
 
-public class DescriptorSetLayout implements IHandle {
+class DescriptorSetLayout implements IHandle {
 	private Device device;
 	private int flags;
 	private DescriptorBinding[] bindings;

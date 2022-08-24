@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import racoonman.r3d.window.api.glfw.Window;
+
 //TODO rewrite this
-public abstract class InputListener<T extends IAction> {
+public class InputListener<T extends IAction> {
 	protected Window window;
 	private AtomicInteger nextPressHandle;
 	private AtomicInteger nextHoldHandle;

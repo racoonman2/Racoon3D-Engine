@@ -4,19 +4,18 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import racoonman.r3d.render.api.vulkan.sync.VkFence;
 import racoonman.r3d.render.api.vulkan.types.Level;
 import racoonman.r3d.render.api.vulkan.types.Status;
 import racoonman.r3d.render.api.vulkan.types.SubmitMode;
 
 class FrameManager {
-	private WorkDispatcher dispatcher;
+	private WorkPool pool;
 	private Device device;
 	private Queue<Frame> cleanFrames;
 	private Queue<Frame> dirtyFrames;
 
-	public FrameManager(WorkDispatcher dispatcher, Device device) {
-		this.dispatcher = dispatcher;
+	public FrameManager(WorkPool pool, Device device) {
+		this.pool = pool;
 		this.device = device;
 		this.cleanFrames = new ConcurrentLinkedQueue<>();
 		this.dirtyFrames = new ConcurrentLinkedQueue<>();
@@ -55,7 +54,7 @@ class FrameManager {
 		private VkFence fence;
 		
 		public Frame() {
-			this.cmdBuffer = FrameManager.this.dispatcher.dispatch(Level.PRIMARY, SubmitMode.SINGLE);
+			this.cmdBuffer = FrameManager.this.pool.dispatch(Level.PRIMARY, SubmitMode.SINGLE);
 			this.fence = new VkFence(FrameManager.this.device, false);
 		}
 		

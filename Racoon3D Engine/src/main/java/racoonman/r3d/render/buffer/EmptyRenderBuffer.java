@@ -5,8 +5,9 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
-import racoonman.r3d.render.RenderContext;
+import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.vertex.RenderBufferData;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
@@ -15,25 +16,25 @@ public class EmptyRenderBuffer implements IRenderBuffer {
 	public static final EmptyRenderBuffer INSTANCE = new EmptyRenderBuffer();
 
 	@Override
-	public void bind(RenderContext context) {	
+	public void bind(Context context) {	
 	}
 	
 	@Override
-	public void draw(RenderContext context, int instanceCount) {
+	public void draw(Context context, int instanceCount) {
 	}
 	
 	@Override
-	public void update(List<IPair<VertexFormat, RenderBufferData>> vertexBuffers, Optional<RenderBufferData> indexBuffer) {
+	public void update(IMemoryCopier uploader, List<IPair<VertexFormat, RenderBufferData>> vertexBuffers, Optional<RenderBufferData> indexBuffer) {
 	}
 	
-	@Override
-	public IRenderBuffer sub() {
-		return INSTANCE;
-	}
-
 	@Override
 	public List<IPair<VertexFormat, IDeviceBuffer>> getVertexBuffers() {
 		return ImmutableList.of();
+	}
+
+	@Override
+	public IRenderBuffer withBuffer(VertexFormat format, IDeviceBuffer buffer) {
+		return this;
 	}
 	
 	@Override

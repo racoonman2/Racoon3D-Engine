@@ -8,7 +8,8 @@ import racoonman.r3d.render.api.vulkan.types.ImageLayout;
 import racoonman.r3d.render.api.vulkan.types.LoadOp;
 import racoonman.r3d.render.api.vulkan.types.StoreOp;
 import racoonman.r3d.render.api.vulkan.types.ViewType;
-import racoonman.r3d.render.core.RenderService;
+import racoonman.r3d.render.core.Service;
+import racoonman.r3d.render.core.Driver;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.resource.codec.ArrayCodec;
 import racoonman.r3d.resource.codec.IDecoder;
@@ -16,7 +17,7 @@ import racoonman.r3d.resource.codec.PrimitiveCodec;
 
 public class Decoders {
 	
-	public static IDecoder<IFramebuffer> forFramebuffer(RenderService service, Object... args) {
+	public static IDecoder<IFramebuffer> forFramebuffer(Object... args) {
 		record AttachmentInfo(ImageLayout layout, int layers, Format format, ViewType viewType, LoadOp loadOp, StoreOp storeOp) {
 			static final IDecoder<AttachmentInfo> DECODER = IDecoder.of(
 				ImageLayout.NAME_CODEC.fetch("layout"),
@@ -32,11 +33,10 @@ public class Decoders {
 		return IDecoder.of(
 			PrimitiveCodec.INT.fetchOr("width", () -> (int) args[0]),
 			PrimitiveCodec.INT.fetchOr("height", () -> (int) args[1]),
-			PrimitiveCodec.INT.fetchOr("layers", () -> (int) args[2]),			
 			ArrayCodec.of(AttachmentInfo.DECODER, AttachmentInfo[]::new).fetchOr("color_attachments", () -> new AttachmentInfo[0]),
 			AttachmentInfo.DECODER.fetchOr("depth_attachment", null),
-			(width, height, layers, colorAttachments, depthAttachment) -> {
-				IFramebuffer fb = service.createFramebuffer(width, height, layers);
+			(width, height, colorAttachments, depthAttachment) -> {
+				IFramebuffer fb = Driver.createFramebuffer(width, height);
 
 				for(AttachmentInfo info : colorAttachments) {
 					fb.withColor(
@@ -59,7 +59,7 @@ public class Decoders {
 		);
 	}
 	
-	public static IDecoder<IShaderProgram> forProgram(RenderService service) {
+	public static IDecoder<IShaderProgram> forProgram(Service service) {
 		return ArrayCodec.of(IDecoder.of(
 			ShaderStage.NAME_CODEC.fetch("stage"),
 			PrimitiveCodec.STRING.fetch("entry"), 

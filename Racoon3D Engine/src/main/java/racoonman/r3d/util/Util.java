@@ -3,14 +3,13 @@ package racoonman.r3d.util;
 import static org.lwjgl.system.MemoryUtil.memAlloc;
 
 import java.nio.ByteBuffer;
-import java.util.function.IntFunction;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 public class Util {
 	public static final long NANOS_PER_SECOND = 1000000000L;
-
+	
 	public static ByteBuffer toBuffer(String s, MemoryStack stack) {
 		return stack.bytes(s.getBytes());
 	}
@@ -46,16 +45,5 @@ public class Util {
 		}
 
 		return -1;
-	}
-
-	public static <T> T[] add(T[] usage, T toAdd, IntFunction<T[]> newArray) {
-		T[] array = newArray.apply(usage.length + 1);
-		
-		for(int i = 0; i < usage.length; i++) {
-			array[i] = usage[i];
-		}
-		
-		array[array.length - 1] = toAdd;
-		return array;
 	}
 }
