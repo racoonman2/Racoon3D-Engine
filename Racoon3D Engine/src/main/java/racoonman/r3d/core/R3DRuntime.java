@@ -6,23 +6,22 @@ import java.util.function.Supplier;
 import racoonman.r3d.core.launch.IExecutable;
 
 public class R3DRuntime {
-	private static Optional<Client> activeClient = Optional.empty();
+	private static Optional<Client> running = Optional.empty();
 	
 	public static void launch(Client client, Supplier<IExecutable> launch) throws Exception {
-		if(activeClient.isEmpty()) {
-			activeClient = Optional.of(client);
+		if(running.isEmpty()) {
+			running = Optional.of(client);
 			
-			IExecutable exe = launch.get();
-			
-			exe.run();
-			exe.close();
+			try(IExecutable exe = launch.get()) {
+				exe.run();
+			}
 		} else {
 			throw new IllegalStateException("Client is already running");
 		}
 	}
 	
 	public static Client getClient() {
-		return activeClient.orElseThrow(() -> new IllegalStateException("No client has been launched"));
+		return running.orElseThrow(() -> new IllegalStateException("No client has been launched"));
 	}
 	
 	public static String getStringOr(String key, String defaultVal) {

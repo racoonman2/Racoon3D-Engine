@@ -2,23 +2,23 @@ package racoonman.r3d.render.camera;
 
 import org.joml.Vector3f;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.matrix.IMatrixType;
+import racoonman.r3d.render.state.IState;
 
 public interface ICamera {
 	Vector3f getPosition();
 	
 	Vector3f getRotation();
 	
-	default void transform(Context ctx) {
-		ctx.matrixType(IMatrixType.VIEW);
+	default void transform(IState state) {
+		state.matrixType(IMatrixType.VIEW);
 		
 		Vector3f pos = this.getPosition();
 		Vector3f rot = this.getRotation();
-		ctx.rotateX(rot.x);
-		ctx.rotateY(rot.y);
-		ctx.rotateZ(rot.z);
-		ctx.translate(-pos.x, -pos.y, -pos.z);
+		state.rotateX(rot.x);
+		state.rotateY(rot.y);
+		state.rotateZ(rot.z);
+		state.translate(-pos.x, -pos.y, -pos.z);
 	}
 	
 	public static ICamera fixed(float x, float y, float z, float rX, float rY, float rZ) {

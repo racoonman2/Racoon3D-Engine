@@ -24,7 +24,7 @@ import org.lwjgl.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.lwjgl.vulkan.VkPhysicalDeviceProperties2;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
-import racoonman.r3d.render.api.vulkan.types.QueueFamily;
+import racoonman.r3d.render.api.types.QueueFamily;
 import racoonman.r3d.render.natives.IHandle;
 	
 class PhysicalDevice implements IHandle {

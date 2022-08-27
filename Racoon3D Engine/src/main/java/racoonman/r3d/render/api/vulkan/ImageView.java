@@ -11,11 +11,11 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkImageViewCreateInfo;
 
-import racoonman.r3d.render.api.vulkan.types.Aspect;
-import racoonman.r3d.render.api.vulkan.types.Format;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
-import racoonman.r3d.render.api.vulkan.types.ViewType;
+import racoonman.r3d.render.api.types.Aspect;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.ImageUsage;
+import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.natives.IHandle;
 
 class ImageView implements IHandle {
@@ -31,7 +31,7 @@ class ImageView implements IHandle {
 	private long handle;
 	
 	public ImageView(Device device, VkImage image, int aspectMask, int baseMipLevel, int baseArrayLayer, ViewType viewType) {
-		this(device, image, aspectMask, baseMipLevel, baseArrayLayer, image.getFormat(), image.getLayers(), image.getMipLevels(), viewType);
+		this(device, image, aspectMask, baseMipLevel, baseArrayLayer, image.getFormat(), image.getLayerCount(), image.getMipLevels(), viewType);
 	}	
 	
 	public ImageView(Device device, VkImage image, int aspectMask, int baseMipLevel, int baseArrayLayer, Format format, int layerCount, int mipLevels, ViewType viewType) {

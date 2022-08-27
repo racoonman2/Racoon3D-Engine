@@ -13,7 +13,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCallbackDataEXT;
 import org.lwjgl.vulkan.VkDebugUtilsMessengerCreateInfoEXT;
 
-import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.core.Driver;
 import racoonman.r3d.render.debug.IDebugLogger;
 import racoonman.r3d.render.debug.IDebugLogger.Severity;

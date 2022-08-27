@@ -34,15 +34,15 @@ import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 
 import racoonman.r3d.render.api.objects.ISwapchain;
 import racoonman.r3d.render.api.objects.IWindowSurface;
+import racoonman.r3d.render.api.types.Aspect;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.ImageLayout;
+import racoonman.r3d.render.api.types.ImageType;
+import racoonman.r3d.render.api.types.ImageUsage;
+import racoonman.r3d.render.api.types.SampleCount;
+import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.api.vulkan.ImageView.ImageViewBuilder;
-import racoonman.r3d.render.api.vulkan.types.Aspect;
-import racoonman.r3d.render.api.vulkan.types.Format;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.ImageLayout;
-import racoonman.r3d.render.api.vulkan.types.ImageType;
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
-import racoonman.r3d.render.api.vulkan.types.SampleCount;
-import racoonman.r3d.render.api.vulkan.types.ViewType;
 import racoonman.r3d.render.natives.IHandle;
 
 //FIXME Frame[] length and actual frame count may differ if device does not support requested number of frames
@@ -130,7 +130,7 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 			boolean resize = false;
 			
 			IntBuffer pointer = stack.mallocInt(1);
-			int err = vkAcquireNextImageKHR(this.device.get(), this.handle, ~0L, frame.getAvailable().getHandle(), 0L, pointer);
+			int err = vkAcquireNextImageKHR(this.device.get(), this.handle, ~0L, frame.getAvailable().asLong(), 0L, pointer);
 			if(err == VK_ERROR_OUT_OF_DATE_KHR) {
 				resize = true;
 			} else if(err != VK_SUBOPTIMAL_KHR && err != VK_SUCCESS) {
@@ -151,7 +151,7 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 			
 			VkPresentInfoKHR present = VkPresentInfoKHR.calloc(stack)
 				.sType(VK_STRUCTURE_TYPE_PRESENT_INFO_KHR)
-				.pWaitSemaphores(stack.longs(frame.getFinished().getHandle()))
+				.pWaitSemaphores(stack.longs(frame.getFinished().asLong()))
 				.swapchainCount(1)
 				.pSwapchains(stack.longs(this.handle))
 				.pImageIndices(stack.ints(this.frameIndex));

@@ -6,8 +6,8 @@ import java.util.Map;
 import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.core.Service;
 import racoonman.r3d.render.shader.ShaderCompiler;
-import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.render.shader.ShaderCompiler.Result;
+import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.render.shader.parsing.IShaderProcessor;
 import racoonman.r3d.resource.codec.IDecoder;
 import racoonman.r3d.resource.format.IEncodingFormat;
@@ -31,7 +31,7 @@ public class ShaderLoader {
 		return this.shaderCache.computeIfAbsent(path, (k) -> ClassPathReader.decode(this.decoder, IEncodingFormat.JSON, path));
 	}
 
-	public Result compileShader(String file, String entry, ShaderStage stage, String...args) {
-		return this.resultCache.computeIfAbsent(file, (k) -> this.compiler.compile(ClassPathReader.readContents(file), stage, file, entry, args));
+	public Result createShader(ShaderStage stage, String entry, String file, String src, String... args) {
+		return this.resultCache.computeIfAbsent(file, (k) -> this.compiler.compile(src, stage, file, entry, args));
 	}
 }

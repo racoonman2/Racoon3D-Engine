@@ -15,8 +15,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkFenceCreateInfo;
 
 import racoonman.r3d.render.api.objects.IFence;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.Status;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.Status;
 
 class VkFence implements IFence {
 	private Device device;

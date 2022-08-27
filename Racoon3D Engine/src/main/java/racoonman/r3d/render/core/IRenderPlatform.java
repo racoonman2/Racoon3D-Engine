@@ -14,7 +14,7 @@ public interface IRenderPlatform {
 		
 		@Override
 		public String getAppName() {
-			return R3DRuntime.getClient().id();
+			return R3DRuntime.getClient().name();
 		}
 		
 		@Override

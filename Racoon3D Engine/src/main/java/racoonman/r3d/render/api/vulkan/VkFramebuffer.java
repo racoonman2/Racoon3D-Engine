@@ -30,7 +30,7 @@ abstract class VkFramebuffer implements IFramebuffer {
 	
 	@Override
 	public void onRenderStart(Context context) {
-		context.signal(this.frames[this.frameIndex].getFinished());
+		context.alert(this.frames[this.frameIndex].getFinished());
 	}
 	
 	@Override
@@ -88,14 +88,14 @@ abstract class VkFramebuffer implements IFramebuffer {
 	class Frame {
 		private List<IAttachment> colorAttachments;
 		private Optional<IAttachment> depthAttachment;
-		private Semaphore available;
-		private Semaphore finished;
+		private VkSemaphore available;
+		private VkSemaphore finished;
 		
 		public Frame() {
 			this.colorAttachments = new ArrayList<>();
 			this.depthAttachment = Optional.empty();
-			this.available = new Semaphore(VkFramebuffer.this.device);
-			this.finished = new Semaphore(VkFramebuffer.this.device);
+			this.available = new VkSemaphore(VkFramebuffer.this.device);
+			this.finished = new VkSemaphore(VkFramebuffer.this.device);
 		}
 
 		public List<IAttachment> getColorAttachments() {
@@ -124,11 +124,11 @@ abstract class VkFramebuffer implements IFramebuffer {
 			return this;
 		}
 		
-		public Semaphore getAvailable() {
+		public VkSemaphore getAvailable() {
 			return this.finished;
 		}
 		
-		public Semaphore getFinished() {
+		public VkSemaphore getFinished() {
 			return this.available;
 		}
 		

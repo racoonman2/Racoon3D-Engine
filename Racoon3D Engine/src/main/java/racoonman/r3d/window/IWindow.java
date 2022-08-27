@@ -7,7 +7,9 @@ import java.nio.IntBuffer;
 import org.lwjgl.system.MemoryStack;
 
 import racoonman.r3d.render.api.objects.ISwapchain;
+import racoonman.r3d.render.api.types.PresentMode;
 import racoonman.r3d.render.natives.IHandle;
+import racoonman.r3d.resource.io.ClassPathReader;
 import racoonman.r3d.util.NativeImage;
 import racoonman.r3d.util.math.Mathi;
 
@@ -19,6 +21,8 @@ public interface IWindow extends IHandle {
 	int getWidth();
 	
 	int getHeight();
+	
+	PresentMode getPresentMode();
 	
 	CharSequence getTitle();
 
@@ -36,7 +40,17 @@ public interface IWindow extends IHandle {
 	
 	void setMonitor(Monitor monitor);
 	
+	default void setIcon(String path) {
+		try(NativeImage image = ClassPathReader.read(path, NativeImage::load)) {
+			this.setIcon(image);
+		}
+	}
+	
 	void setIcon(NativeImage image);
+	
+	default void swapBuffers() {
+		this.getSwapchain().present();
+	}
 	
 	boolean isOpen();
 	

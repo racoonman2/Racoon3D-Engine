@@ -3,9 +3,10 @@ package racoonman.r3d.render.buffer;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.objects.RenderPass;
 import racoonman.r3d.render.memory.IMemoryCopier;
+import racoonman.r3d.render.state.IState;
 import racoonman.r3d.render.vertex.RenderBufferData;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
@@ -22,17 +23,17 @@ public class IndexedRenderBuffer extends RenderBufferImpl {
 	}
 	
 	@Override
-	public void draw(Context context, int instanceCount) {
-		this.bind(context);
+	public void bind(IState state) {
+		super.bind(state);
 		
-		context.drawIndexed(instanceCount, 0, 0, this.indexCount);
+		state.bindIndexBuffer(this.indexBuffer);
 	}
 
 	@Override
-	public void bind(Context context) {
-		super.bind(context);
+	public void draw(RenderPass pass, int instanceCount) {
+		this.bind(pass);
 		
-		context.bindIndexBuffer(this.indexBuffer);
+		pass.drawIndexed(instanceCount, 0, 0, this.indexCount);
 	}
 
 	@Override

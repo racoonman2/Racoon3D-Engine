@@ -13,7 +13,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_MIDDLE;
 import static org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
-import racoonman.r3d.window.api.glfw.Window;
+import racoonman.r3d.window.api.glfw.GLFWWindow;
 
 public enum MouseButton implements IAction {
 	BUTTON_1(GLFW_MOUSE_BUTTON_1),
@@ -41,7 +41,7 @@ public enum MouseButton implements IAction {
 	}
 	
 	@Override
-	public Status getStatus(Window window) {
+	public Status getStatus(GLFWWindow window) {
 		return window.getMouseButton(this);
 	}
 }

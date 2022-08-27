@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import com.google.common.collect.ImmutableList;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.objects.RenderPass;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.vertex.RenderBufferData;
 import racoonman.r3d.render.vertex.VertexFormat;
@@ -16,11 +16,7 @@ public class EmptyRenderBuffer implements IRenderBuffer {
 	public static final EmptyRenderBuffer INSTANCE = new EmptyRenderBuffer();
 
 	@Override
-	public void bind(Context context) {	
-	}
-	
-	@Override
-	public void draw(Context context, int instanceCount) {
+	public void draw(RenderPass pass, int instanceCount) {
 	}
 	
 	@Override

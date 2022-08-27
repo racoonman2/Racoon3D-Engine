@@ -11,16 +11,16 @@ import org.lwjgl.system.MemoryStack;
 
 import racoonman.r3d.render.api.objects.ISwapchain;
 import racoonman.r3d.render.api.objects.IWindowSurface;
-import racoonman.r3d.render.api.vulkan.types.PresentMode;
-import racoonman.r3d.window.api.glfw.Window;
+import racoonman.r3d.render.api.types.PresentMode;
+import racoonman.r3d.window.IWindow;
 
 class VkWindowSurface implements IWindowSurface {
 	private Vulkan vulkan;
-	private Window window;
+	private IWindow window;
 	private long handle;
 	private DeviceQueue presentQueue;
 	
-	public VkWindowSurface(Device device, Window window, int queueIndex) {
+	public VkWindowSurface(Device device, IWindow window, int queueIndex) {
 		try(MemoryStack stack = stackPush()) {
 			this.vulkan = device.getVulkan();
 			this.window = window;
@@ -34,7 +34,7 @@ class VkWindowSurface implements IWindowSurface {
 	}
 
 	@Override
-	public ISwapchain makeSwapchain(int frameCount) {
+	public ISwapchain createSwapchain(int frameCount) {
 		return new VkSwapchain(this, this.presentQueue, frameCount);
 	}
 

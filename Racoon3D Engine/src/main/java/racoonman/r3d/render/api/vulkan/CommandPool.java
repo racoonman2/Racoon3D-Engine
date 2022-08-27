@@ -14,8 +14,8 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkCommandPoolCreateInfo;
 
-import racoonman.r3d.render.api.vulkan.types.Level;
-import racoonman.r3d.render.api.vulkan.types.SubmitMode;
+import racoonman.r3d.render.api.types.Level;
+import racoonman.r3d.render.api.types.SubmitMode;
 import racoonman.r3d.render.natives.IHandle;
 
 class CommandPool implements IHandle {

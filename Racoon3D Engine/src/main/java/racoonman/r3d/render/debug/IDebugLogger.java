@@ -10,7 +10,7 @@ import static org.lwjgl.vulkan.EXTDebugUtils.VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDAT
 
 import java.util.function.Consumer;
 
-import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.api.types.IVkType;
 
 public interface IDebugLogger {
 	public static final IDebugLogger NOOP = new IDebugLogger() {

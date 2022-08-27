@@ -5,36 +5,32 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import org.joml.Matrix4fStack;
-
 import com.google.common.collect.Lists;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IFramebuffer;
+import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.api.objects.RenderPass;
-import racoonman.r3d.render.api.objects.Scissor;
-import racoonman.r3d.render.api.objects.Viewport;
-import racoonman.r3d.render.api.objects.sync.GpuFence;
-import racoonman.r3d.render.api.vulkan.Semaphore;
-import racoonman.r3d.render.api.vulkan.types.ColorComponent;
-import racoonman.r3d.render.api.vulkan.types.CullMode;
-import racoonman.r3d.render.api.vulkan.types.FrontFace;
-import racoonman.r3d.render.api.vulkan.types.PolygonMode;
-import racoonman.r3d.render.api.vulkan.types.SampleCount;
-import racoonman.r3d.render.api.vulkan.types.Stage;
-import racoonman.r3d.render.api.vulkan.types.Topology;
+import racoonman.r3d.render.api.sync.LocalSync;
+import racoonman.r3d.render.api.types.ColorComponent;
+import racoonman.r3d.render.api.types.CullMode;
+import racoonman.r3d.render.api.types.FrontFace;
+import racoonman.r3d.render.api.types.PolygonMode;
+import racoonman.r3d.render.api.types.SampleCount;
+import racoonman.r3d.render.api.types.Stage;
+import racoonman.r3d.render.api.types.Topology;
 import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.matrix.IMatrixType;
 import racoonman.r3d.render.matrix.MatrixStackImpl;
 import racoonman.r3d.render.memory.IMemoryCopier;
+import racoonman.r3d.render.state.IState;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
-import racoonman.r3d.util.math.Mathf;
 
 //TODO multiple viewports / scissors
 //FIXME CCW and CW are opposite on opengl and vulkan due to flipping the y axis
-public abstract class Context extends MatrixStackImpl implements AutoCloseable, IMemoryCopier {
+public abstract class Context extends MatrixStackImpl implements AutoCloseable, IMemoryCopier, IState {
 	protected State<IShaderProgram> program;
 	protected State<CullMode> cullMode;
 	protected State<Float> lineWidth;
@@ -67,142 +63,156 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 	}
 
 	public RenderPass beginPass(IFramebuffer framebuffer) {
-		this.viewport(framebuffer.getViewport(0.0F, 1.0F));
-		this.scissor(framebuffer.getScissor());
+		this.setViewport(framebuffer.getViewport(0.0F, 1.0F));
+		this.setScissor(framebuffer.getScissor());
 		framebuffer.acquire();
 		return this.createPass(framebuffer);
 	}
 	
 	public abstract RenderPass createPass(IFramebuffer framebuffer);
 
-	//TODO remove, directly references vulkan
-	public abstract void wait(Semaphore semaphore, Stage stage);
+	public abstract void alert(IContextSync... syncs);
 	
-	//TODO remove, directly references vulkan
-	public abstract void signal(Semaphore semaphore);
+	public abstract void sync(IContextSync syncs, Stage stage);
 	
-	public abstract void insert(GpuFence fence);
+	public abstract void sync(LocalSync localSync);
 	
+	@Override
 	public IShaderProgram getProgram() {
 		return this.program.getValue();
 	}
-	
+
+	@Override
 	public CullMode getCullMode() {
 		return this.cullMode.getValue();
 	}
-	
+
+	@Override
 	public float getLineWidth() {
 		return this.lineWidth.getValue();
 	}
-	
+
+	@Override
 	public Viewport getViewport() {
 		return this.viewport.getValue();
 	}
-	
+
+	@Override
 	public Scissor getScissor() {
 		return this.scissor.getValue();
 	}
-	
+
+	@Override
 	public Topology getTopology() {
 		return this.topology.getValue();
 	}
-	
+
+	@Override
 	public SampleCount getSampleCount() {
 		return this.sampleCount.getValue();
 	}
-	
+
+	@Override
 	public ColorComponent[] getWriteMask() {
 		return this.writeMask.getValue();
 	}
-	
+
+	@Override
 	public PolygonMode getPolygonMode() {
 		return this.polygonMode.getValue();
 	}
-	
+
+	@Override
 	public FrontFace getFrontFace() {
 		return this.frontFace.getValue();
 	}
-	
-	public void perspective(float fov, float aspect, float near, float far) {
-		this.<Matrix4fStack>currentMatrix().perspective(Mathf.toRadians(fov), aspect, near, far, true);
-	}
-	
-	public void perspective(int width, int height, float fov, float near, float far) {
-		this.matrixType(IMatrixType.PROJECTION);
-		
-		this.perspective(fov, (float) width / height, near, far);
-	}
-	
-	public void ortho(float left, float right, float top, float bottom, float near, float far) {
-		this.<Matrix4fStack>currentMatrix().ortho(left, right, top, bottom, near, far, true);
-	}
-	
-	public void program(IShaderProgram program) {
+
+	@Override
+	public void bindProgram(IShaderProgram program) {
 		this.program.set(program);
 		this.updateState();
 	}
 	
-	public void cullMode(CullMode cullMode) {
+	@Override
+	public void setCullMode(CullMode cullMode) {
 		this.cullMode.set(cullMode);
 		this.updateState();
 	}
-	
-	public void lineWidth(float width) {
+
+	@Override
+	public void setLineWidth(float width) {
 		this.lineWidth.set(width);
 		this.updateState();
 	}
-	
-	public void viewport(Viewport viewport) {
+
+	@Override
+	public void setViewport(Viewport viewport) {
 		this.viewport.set(viewport);
 		this.updateState();
 	}
 
-	public void scissor(Scissor scissor) {
+	@Override
+	public void setScissor(Scissor scissor) {
 		this.scissor.set(scissor);
 		this.updateState();
 	}
-	
+
+	@Override
 	public void bindVertexBuffers(List<IPair<VertexFormat, IDeviceBuffer>> buffers) {
 		this.vertexBuffers.set(buffers);
 		this.updateState();
 	}
-	
+
+	@Override
 	public void bindIndexBuffer(IDeviceBuffer indexBuffer) {
 		this.indexBuffer.set(indexBuffer);
 		this.updateState();
 	}
-	
-	public void topology(Topology topology) {
+
+	@Override
+	public void setTopology(Topology topology) {
 		this.topology.set(topology);
 		this.updateState();
 	}
-	
-	public void samples(SampleCount samples) {
+
+	@Override
+	public void setSamples(SampleCount samples) {
 		this.sampleCount.set(samples);
 		this.updateState();
 	}
-	
-	public void writeMask(ColorComponent... channels) {
-		this.writeMask.set(channels);
+
+	@Override
+	public void setWriteMask(ColorComponent... components) {
+		this.writeMask.set(components);
 		this.updateState();
 	}
-	
-	public void polygonMode(PolygonMode mode) {
+
+	@Override
+	public void setPolygonMode(PolygonMode mode) {
 		this.polygonMode.set(mode);
 		this.updateState();
 	}
-	
-	public void frontFace(FrontFace frontFace) {
+
+	@Override
+	public void setFrontFace(FrontFace frontFace) {
 		this.frontFace.set(frontFace);
 		this.updateState();
 	}
 	
+	public RenderPass begin(IFramebuffer framebuffer) {
+		return this.begin(framebuffer, 0.0F, 0.0F, 0.0F, 1.0F);
+	}
+	
+	public RenderPass begin(IFramebuffer framebuffer, float clearR, float clearG, float clearB, float clearA) {
+		RenderPass pass = this.beginPass(framebuffer);
+		pass.clear(clearR, clearG, clearB, clearA);
+		pass.begin();
+		return pass;
+	}
+	
+	
 	protected abstract void updateState();
-	
-	public abstract void draw(int instanceCount, int start, int amount);
 
-	public abstract void drawIndexed(int instanceCount, int vertexStart, int indexStart, int amount);
-	
 	public abstract void submit();
 	
 	@Override

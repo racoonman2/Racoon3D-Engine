@@ -37,13 +37,13 @@ public abstract class EventLoop implements Executor, IExecutable {
 
 	        if(delta >= 1) {
 	        	this.tick();
-	        	
-	        	while(!this.queue.isEmpty()) {
-	        		this.queue.poll().run();
-	        	}
 
 	        	while(!this.futures.isEmpty()) {
 	        		this.futures.poll().join();
+	        	}
+	        	
+	        	while(!this.queue.isEmpty()) {
+	        		this.queue.poll().run();
 	        	}
 	        	
 	        	delta--;

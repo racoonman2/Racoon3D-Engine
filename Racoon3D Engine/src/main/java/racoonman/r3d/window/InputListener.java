@@ -4,18 +4,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import racoonman.r3d.window.api.glfw.Window;
+import racoonman.r3d.window.api.glfw.GLFWWindow;
 
 //TODO rewrite this
 public class InputListener<T extends IAction> {
-	protected Window window;
+	protected GLFWWindow window;
 	private AtomicInteger nextPressHandle;
 	private AtomicInteger nextHoldHandle;
 	private Map<Integer, CallbackHolder> holdCallbacks;
 	private Map<Integer, CallbackHolder> pressCallbacks;
 	private Map<Integer, CallbackHolder> releaseCallbacks;
 	
-	public InputListener(Window window) {
+	public InputListener(GLFWWindow window) {
 		this.window = window;
 		this.nextPressHandle = new AtomicInteger();
 		this.nextHoldHandle = new AtomicInteger();

@@ -8,26 +8,40 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
 import org.lwjgl.vulkan.VkRenderingInfo;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.RenderPass;
-import racoonman.r3d.render.api.vulkan.types.ImageLayout;
-import racoonman.r3d.render.api.vulkan.types.LoadOp;
-import racoonman.r3d.render.api.vulkan.types.StoreOp;
+import racoonman.r3d.render.api.types.ImageLayout;
+import racoonman.r3d.render.api.types.LoadOp;
+import racoonman.r3d.render.api.types.StoreOp;
 
 class VkRenderPass extends RenderPass {
+	private VkContext context;
 	private CommandBuffer cmdBuffer;
 	private IFramebuffer framebuffer;
 	
-	public VkRenderPass(Context context, CommandBuffer buffer, IFramebuffer framebuffer) {
-		this.cmdBuffer = buffer;
+	public VkRenderPass(VkContext context, CommandBuffer cmdBuffer, IFramebuffer framebuffer) {
+		super(context);
+		this.context = context;
+		this.cmdBuffer = cmdBuffer;
 		this.framebuffer = framebuffer;
 		this.framebuffer.onRenderStart(context);
 	}
+
+	@Override
+	public void draw(int instanceCount, int start, int amount) {
+		this.context.applyState();
+		this.cmdBuffer.draw(amount, instanceCount, start, 0);
+	}
+
+	@Override
+	public void drawIndexed(int instanceCount, int vertexStart, int indexStart, int amount) {
+		this.context.applyState();
+		this.cmdBuffer.drawIndexed(amount, instanceCount, vertexStart, indexStart, 0);
+	}
 	
 	@Override
-	public RenderPass begin() {
+	public void begin() {
 		try(MemoryStack stack = stackPush()) {
 			List<IAttachment> colorAttachments = this.framebuffer.getColorAttachments();
 			VkRenderingInfo renderingInfo = VkRenderingInfo.calloc(stack)
@@ -80,8 +94,6 @@ class VkRenderPass extends RenderPass {
 				
 			this.cmdBuffer.beginRendering(renderingInfo);
 		}
-		
-		return this;
 	}
 	
 	@Override

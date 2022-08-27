@@ -11,11 +11,11 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSamplerCreateInfo;
 
-import racoonman.r3d.render.api.vulkan.types.AddressMode;
-import racoonman.r3d.render.api.vulkan.types.BorderColor;
-import racoonman.r3d.render.api.vulkan.types.CompareOp;
-import racoonman.r3d.render.api.vulkan.types.Filter;
-import racoonman.r3d.render.api.vulkan.types.MipmapMode;
+import racoonman.r3d.render.api.types.AddressMode;
+import racoonman.r3d.render.api.types.BorderColor;
+import racoonman.r3d.render.api.types.CompareOp;
+import racoonman.r3d.render.api.types.Filter;
+import racoonman.r3d.render.api.types.MipmapMode;
 import racoonman.r3d.render.natives.IHandle;
 
 class Sampler implements IHandle {

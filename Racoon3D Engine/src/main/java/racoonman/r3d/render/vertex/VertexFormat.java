@@ -3,8 +3,8 @@ package racoonman.r3d.render.vertex;
 import java.util.ArrayList;
 import java.util.List;
 
-import racoonman.r3d.render.api.vulkan.types.Format;
-import racoonman.r3d.render.api.vulkan.types.InputRate;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.InputRate;
 import racoonman.r3d.render.util.DataType;
 import racoonman.r3d.resource.codec.ICodec;
 import racoonman.r3d.resource.codec.PrimitiveCodec;

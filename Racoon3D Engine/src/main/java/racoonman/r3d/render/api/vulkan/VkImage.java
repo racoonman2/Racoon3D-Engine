@@ -15,11 +15,11 @@ import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkImageCreateInfo;
 
 import racoonman.r3d.render.api.objects.IImage;
-import racoonman.r3d.render.api.vulkan.types.Format;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.ImageType;
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
-import racoonman.r3d.render.api.vulkan.types.SampleCount;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.ImageType;
+import racoonman.r3d.render.api.types.ImageUsage;
+import racoonman.r3d.render.api.types.SampleCount;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.util.IPair;
 
@@ -29,7 +29,7 @@ class VkImage implements IImage {
 	private Format format;
 	private int mipLevels;
 	private SampleCount sampleCount;
-	private int arrayLayers;
+	private int layerCount;
 	private ImageUsage[] usage;
 	private int width;
 	private int height;
@@ -37,13 +37,13 @@ class VkImage implements IImage {
 	private long handle;
 	private Optional<Allocation> allocation;
 
-	public VkImage(Device device, ImageType type, Format format, int mipLevels, SampleCount sampleCount, int arrayLayers, ImageUsage[] usage, int width, int height, int flags, long handle) {
+	public VkImage(Device device, ImageType type, Format format, int mipLevels, SampleCount sampleCount, int layerCount, ImageUsage[] usage, int width, int height, int flags, long handle) {
 		this.device = device;
 		this.type = type;
 		this.format = format;
 		this.mipLevels = mipLevels;
 		this.sampleCount = sampleCount;
-		this.arrayLayers = arrayLayers;
+		this.layerCount = layerCount;
 		this.usage = usage;
 		this.width = width;
 		this.height = height;
@@ -52,13 +52,13 @@ class VkImage implements IImage {
 		this.allocation = Optional.empty();
 	}
 	
-	public VkImage(Device device, ImageType type, Format format, int mipLevels, SampleCount sampleCount, int arrayLayers, ImageUsage[] usage, int width, int height, int flags) {
+	public VkImage(Device device, ImageType type, Format format, int mipLevels, SampleCount sampleCount, int layerCount, ImageUsage[] usage, int width, int height, int flags) {
 		try(MemoryStack stack = stackPush()) {
 			this.device = device;
 			this.format = format;
 			this.mipLevels = mipLevels;
 			this.sampleCount = sampleCount;
-			this.arrayLayers = arrayLayers;
+			this.layerCount = layerCount;
 			this.usage = usage;
 			this.width = width;
 			this.height = height;
@@ -70,7 +70,7 @@ class VkImage implements IImage {
 				.format(format.getVkType())
 				.extent((it) -> it.width(width).height(height).depth(1))
 				.mipLevels(mipLevels)
-				.arrayLayers(arrayLayers)
+				.arrayLayers(layerCount)
 				.samples(sampleCount.getVkType())
 				.initialLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 				.sharingMode(VK_SHARING_MODE_EXCLUSIVE)
@@ -107,8 +107,8 @@ class VkImage implements IImage {
 	}
 	
 	@Override
-	public int getLayers() {
-		return this.arrayLayers;
+	public int getLayerCount() {
+		return this.layerCount;
 	}
 	
 	@Override
@@ -117,7 +117,7 @@ class VkImage implements IImage {
 	}
 	
 	public VkImage copy() {
-		return new VkImage(this.device, this.type, this.format, this.mipLevels, this.sampleCount, this.arrayLayers, this.usage, this.width, this.height, this.flags);
+		return new VkImage(this.device, this.type, this.format, this.mipLevels, this.sampleCount, this.layerCount, this.usage, this.width, this.height, this.flags);
 	}
 	
 	@Override

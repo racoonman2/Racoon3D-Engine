@@ -3,6 +3,7 @@ package racoonman.r3d.render.matrix;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
+import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.util.math.Mathf;
 
 public interface IMatrixStack {
@@ -59,5 +60,23 @@ public interface IMatrixStack {
 	
 	default void rotateZ(float rotation) {
 		this.<Matrix4fStack>currentMatrix().rotateZ(Mathf.toRadians(rotation));
+	}
+
+	default void setPerspective(float fov, float aspect, float near, float far) {
+		this.<Matrix4fStack>currentMatrix().perspective(Mathf.toRadians(fov), aspect, near, far, true);
+	}
+	
+	default void setPerspective(int width, int height, float fov, float near, float far) {
+		this.matrixType(IMatrixType.PROJECTION);
+		
+		this.setPerspective(fov, (float) width / height, near, far);
+	}
+
+	default void setPerspective(IFramebuffer framebuf, float fov, float near, float far) {
+		this.setPerspective(fov, (float) framebuf.getWidth() / (float) framebuf.getHeight(), near, far);
+	}
+	
+	default void setOrtho(float left, float right, float top, float bottom, float near, float far) {
+		this.<Matrix4fStack>currentMatrix().ortho(left, right, top, bottom, near, far, true);
 	}
 }

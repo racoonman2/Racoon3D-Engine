@@ -12,7 +12,7 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkPipelineLayoutCreateInfo;
 import org.lwjgl.vulkan.VkPushConstantRange;
 
-import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.resource.codec.ArrayCodec;
