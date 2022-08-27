@@ -6,7 +6,6 @@ import java.util.Map;
 import org.lwjgl.system.NativeResource;
 
 import racoonman.r3d.render.Context;
-import racoonman.r3d.render.Work;
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
@@ -20,6 +19,7 @@ import racoonman.r3d.render.api.types.Format;
 import racoonman.r3d.render.api.types.ImageLayout;
 import racoonman.r3d.render.api.types.ImageUsage;
 import racoonman.r3d.render.api.types.Property;
+import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.debug.IDebugLogger;
@@ -38,8 +38,8 @@ public class Driver {
 	private static IDebugLogger logger = new IssueOnlyDebugLogger();
 	
 	//FIXME not thread safe, like, at all
-	public static Context begin(int queueIndex, Work type) {
-		return SERVICE.get().createContext(queueIndex, type);
+	public static Context begin(int queueIndex, QueueType queue) {
+		return SERVICE.get().createContext(queueIndex, queue);
 	}
 	
 	public static IShaderProgram loadShader(String path) {

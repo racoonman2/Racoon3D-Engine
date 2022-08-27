@@ -9,7 +9,7 @@ import java.util.function.Function;
 import org.lwjgl.system.MemoryStack;
 
 import racoonman.r3d.render.api.types.Level;
-import racoonman.r3d.render.api.types.QueueFamily;
+import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.api.types.SubmitMode;
 
 class WorkPool {
@@ -17,7 +17,7 @@ class WorkPool {
 	private DeviceQueue queue;
 	private CommandPool pool;
 	
-	public WorkPool(Device device, QueueFamily queueFamily, int index) {
+	public WorkPool(Device device, QueueType queueFamily, int index) {
 		this.device = device;
 		this.queue = DeviceQueue.work(device, queueFamily, index);
 		this.pool = new CommandPool(device, this.queue);

@@ -24,7 +24,7 @@ import org.lwjgl.vulkan.VkPhysicalDeviceMemoryProperties;
 import org.lwjgl.vulkan.VkPhysicalDeviceProperties2;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
-import racoonman.r3d.render.api.types.QueueFamily;
+import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.natives.IHandle;
 	
 class PhysicalDevice implements IHandle {
@@ -123,7 +123,7 @@ class PhysicalDevice implements IHandle {
 		return false;
 	}
 	
-	public boolean hasQueueFamily(QueueFamily queue) {
+	public boolean hasQueueFamily(QueueType queue) {
 		int queueFamilyCount = this.queueFamilyProps != null ? this.queueFamilyProps.capacity() : 0;
 		
 		for(int i = 0; i < queueFamilyCount; i++) {
@@ -179,7 +179,7 @@ class PhysicalDevice implements IHandle {
 				PhysicalDevice device = new PhysicalDevice(vkDevice);
 			
 				if(device.hasExtension(KHRSwapchain.VK_KHR_SWAPCHAIN_EXTENSION_NAME)) {
-					for(QueueFamily family : QueueFamily.values()) {
+					for(QueueType family : QueueType.values()) {
 						if(!device.hasQueueFamily(family)) {
 							continue;
 						}
