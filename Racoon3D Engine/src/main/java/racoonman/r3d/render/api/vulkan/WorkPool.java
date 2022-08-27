@@ -8,9 +8,9 @@ import java.util.function.Function;
 
 import org.lwjgl.system.MemoryStack;
 
-import racoonman.r3d.render.api.vulkan.types.Level;
-import racoonman.r3d.render.api.vulkan.types.QueueFamily;
-import racoonman.r3d.render.api.vulkan.types.SubmitMode;
+import racoonman.r3d.render.api.types.Level;
+import racoonman.r3d.render.api.types.QueueFamily;
+import racoonman.r3d.render.api.types.SubmitMode;
 
 class WorkPool {
 	private Device device;

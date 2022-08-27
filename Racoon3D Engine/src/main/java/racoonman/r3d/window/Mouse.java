@@ -6,7 +6,7 @@ import java.nio.DoubleBuffer;
 
 import org.lwjgl.system.MemoryStack;
 
-import racoonman.r3d.window.api.glfw.Window;
+import racoonman.r3d.window.api.glfw.GLFWWindow;
 
 public class Mouse extends InputListener<MouseButton> {
 	private boolean locked;
@@ -17,7 +17,7 @@ public class Mouse extends InputListener<MouseButton> {
 	private double deltaX;
 	private double deltaY;
 
-	public Mouse(Window window) {
+	public Mouse(GLFWWindow window) {
 		super(window);
 
 		this.sensitivity = 0.1D;

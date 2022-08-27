@@ -5,12 +5,12 @@ import java.util.Comparator;
 
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IShaderProgram;
-import racoonman.r3d.render.api.vulkan.types.ColorComponent;
-import racoonman.r3d.render.api.vulkan.types.CullMode;
-import racoonman.r3d.render.api.vulkan.types.FrontFace;
-import racoonman.r3d.render.api.vulkan.types.PolygonMode;
-import racoonman.r3d.render.api.vulkan.types.SampleCount;
-import racoonman.r3d.render.api.vulkan.types.Topology;
+import racoonman.r3d.render.api.types.ColorComponent;
+import racoonman.r3d.render.api.types.CullMode;
+import racoonman.r3d.render.api.types.FrontFace;
+import racoonman.r3d.render.api.types.PolygonMode;
+import racoonman.r3d.render.api.types.SampleCount;
+import racoonman.r3d.render.api.types.Topology;
 import racoonman.r3d.render.vertex.VertexFormat;
 
 record PipelineState(IShaderProgram program, VertexFormat[] formats, Topology topology, PolygonMode polygonMode, CullMode cullMode, float lineWidth, FrontFace frontFace, SampleCount sampleCount, ColorComponent[] writeMask, IFramebuffer framebuffer) {

@@ -13,9 +13,9 @@ import org.lwjgl.vulkan.VkBufferCopy;
 import org.lwjgl.vulkan.VkMemoryType;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.vulkan.types.Aspect;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
+import racoonman.r3d.render.api.types.Aspect;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.ImageUsage;
 
 class VkUtils {
 	

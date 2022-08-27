@@ -23,9 +23,11 @@ import org.lwjgl.vulkan.VkQueueFamilyProperties;
 import org.lwjgl.vulkan.VkSubmitInfo;
 
 import racoonman.r3d.core.R3DRuntime;
+import racoonman.r3d.render.api.objects.IFence;
+import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.IWindowSurface;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.QueueFamily;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.QueueFamily;
 import racoonman.r3d.util.Holder;
 
 abstract class DeviceQueue {
@@ -55,15 +57,14 @@ abstract class DeviceQueue {
 				.pCommandBuffers(QueueSubmission.toPointerBuffer(submission.commandBuffers(), stack))
 				.pSignalSemaphores(QueueSubmission.toLongBuffer(submission.signals(), stack));
 			
-			List<Semaphore> waits = submission.waits();
+			List<IContextSync> waits = submission.waits();
 			info.waitSemaphoreCount(waits.size())
 				.pWaitSemaphores(QueueSubmission.toLongBuffer(waits, stack))
 				.pWaitDstStageMask(stack.ints(IVkType.asInts(submission.stageMasks())));
 			
-			Holder<VkFence> fence = submission.fence();
+			Holder<IFence> fence = submission.fence();
 			int status = vkQueueSubmit(this.queue, info, fence.isPresent() ? fence.getValue().asLong() : 0L);
 			
-			//vkQueueSubmit gets special result handling
 			if(status != VK_SUCCESS) {
 				R3DRuntime.critical(switch(status) {
 					case VK_ERROR_OUT_OF_DEVICE_MEMORY -> "out of device RAM";

@@ -46,10 +46,10 @@ import org.lwjgl.vulkan.VkViewport;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.vulkan.types.BindPoint;
-import racoonman.r3d.render.api.vulkan.types.IndexType;
-import racoonman.r3d.render.api.vulkan.types.Level;
-import racoonman.r3d.render.api.vulkan.types.SubmitMode;
+import racoonman.r3d.render.api.types.BindPoint;
+import racoonman.r3d.render.api.types.IndexType;
+import racoonman.r3d.render.api.types.Level;
+import racoonman.r3d.render.api.types.SubmitMode;
 import racoonman.r3d.render.natives.IHandle;
 
 class CommandBuffer implements IHandle {

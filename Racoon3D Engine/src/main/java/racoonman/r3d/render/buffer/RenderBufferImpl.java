@@ -4,9 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.objects.RenderPass;
 import racoonman.r3d.render.memory.IMemoryCopier;
+import racoonman.r3d.render.state.IState;
 import racoonman.r3d.render.vertex.RenderBufferData;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
@@ -19,14 +20,15 @@ public class RenderBufferImpl implements IRenderBuffer {
 		this.vertexBuffers = new ArrayList<>();
 	}
 
-	@Override
-	public void bind(Context context) {
-		context.bindVertexBuffers(this.vertexBuffers);
+	public void bind(IState state) {
+		state.bindVertexBuffers(this.vertexBuffers);
 	}
 	
 	@Override
-	public void draw(Context context, int instanceCount) {
-		context.draw(instanceCount, 0, this.vertexCount);
+	public void draw(RenderPass pass, int instanceCount) {
+		this.bind(pass);
+		
+		pass.draw(instanceCount, 0, this.vertexCount);
 	}
 
 	@Override

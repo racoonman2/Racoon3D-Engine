@@ -13,7 +13,7 @@ import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
 import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 import static org.lwjgl.vulkan.VK10.VK_SHADER_STAGE_VERTEX_BIT;
 
-import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.resource.codec.EnumCodec;
 import racoonman.r3d.resource.codec.ICodec;
 

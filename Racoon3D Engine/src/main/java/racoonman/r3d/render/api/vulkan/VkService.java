@@ -6,21 +6,22 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.lwjgl.system.NativeResource;
 
 import racoonman.r3d.render.Context;
-import racoonman.r3d.render.WorkType;
+import racoonman.r3d.render.Work;
 import racoonman.r3d.render.api.objects.IAttachment;
+import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.IMappedMemory;
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.api.objects.IWindowSurface;
-import racoonman.r3d.render.api.vulkan.types.BufferUsage;
-import racoonman.r3d.render.api.vulkan.types.Format;
-import racoonman.r3d.render.api.vulkan.types.ImageLayout;
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
-import racoonman.r3d.render.api.vulkan.types.Property;
-import racoonman.r3d.render.api.vulkan.types.QueueFamily;
-import racoonman.r3d.render.api.vulkan.types.ViewType;
+import racoonman.r3d.render.api.types.BufferUsage;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.ImageLayout;
+import racoonman.r3d.render.api.types.ImageUsage;
+import racoonman.r3d.render.api.types.Property;
+import racoonman.r3d.render.api.types.QueueFamily;
+import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.core.IRenderPlatform;
 import racoonman.r3d.render.core.Service;
@@ -29,7 +30,7 @@ import racoonman.r3d.render.shader.ShaderCompiler.Result;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.render.state.uniform.UniformBuffer;
 import racoonman.r3d.util.Bytes;
-import racoonman.r3d.window.api.glfw.Window;
+import racoonman.r3d.window.IWindow;
 
 // TODO use vulkan pipeline cache
 class VkService extends Service {
@@ -63,8 +64,9 @@ class VkService extends Service {
 			.allocate(this));
 	}
 
+	//TODO lookup queue based on index and type instead
 	@Override
-	public Context createContext(WorkType type) {
+	public Context createContext(int queueIndex, Work type) {
 		return new VkContext(this.renderCache, switch(type) {
 			case GRAPHICS -> this.graphicsPool;
 			case COMPUTE -> this.computePool;
@@ -73,8 +75,8 @@ class VkService extends Service {
 	}
 
 	@Override
-	public IShader createShader(ShaderStage stage, String entry, String file, String... args) {
-		try(Result result = this.shaderLoader.compileShader(file, entry, stage, args)) {
+	public IShader createShader(ShaderStage stage, String entry, String file, String src, String... args) {
+		try(Result result = this.shaderLoader.createShader(stage, entry, file, src, args)) {
 			return new VkShader(this.device, stage, entry, result.getData());
 		}
 	}
@@ -90,7 +92,7 @@ class VkService extends Service {
 	}
 
 	@Override
-	public IWindowSurface createSurface(Window window) {
+	public IWindowSurface createSurface(IWindow window) {
 		return new VkWindowSurface(this.device, window, 0);
 	}
 
@@ -102,6 +104,11 @@ class VkService extends Service {
 	@Override
 	public IAttachment createAttachment(int width, int height, int layers, ImageLayout layout, Format format, ViewType viewType, ImageUsage... usage) {
 		return new VkAttachment(width, height, layers, format, viewType, usage, this.device);
+	}
+
+	@Override
+	protected IContextSync createContextSync() {
+		return new VkSemaphore(this.device);
 	}
 
 	@Override

@@ -15,20 +15,21 @@ import org.lwjgl.vulkan.VkViewport;
 import org.lwjgl.vulkan.VkWriteDescriptorSet;
 
 import racoonman.r3d.render.Context;
+import racoonman.r3d.render.Scissor;
+import racoonman.r3d.render.Viewport;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IFramebuffer;
+import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.RenderPass;
-import racoonman.r3d.render.api.objects.Scissor;
-import racoonman.r3d.render.api.objects.Viewport;
-import racoonman.r3d.render.api.objects.sync.GpuFence;
-import racoonman.r3d.render.api.objects.sync.ImageFence;
+import racoonman.r3d.render.api.sync.LocalSync;
+import racoonman.r3d.render.api.sync.LocalSync.ImageSync;
+import racoonman.r3d.render.api.types.BindPoint;
+import racoonman.r3d.render.api.types.DescriptorType;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.IndexType;
+import racoonman.r3d.render.api.types.Stage;
 import racoonman.r3d.render.api.vulkan.CommandBuffer.VertexBuffer;
 import racoonman.r3d.render.api.vulkan.FrameManager.Frame;
-import racoonman.r3d.render.api.vulkan.types.BindPoint;
-import racoonman.r3d.render.api.vulkan.types.DescriptorType;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.IndexType;
-import racoonman.r3d.render.api.vulkan.types.Stage;
 import racoonman.r3d.render.matrix.IMatrixType;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.render.state.uniform.UniformBuffer;
@@ -64,31 +65,33 @@ class VkContext extends Context {
 		this.lastModel = invalid();
 		
 		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
-		this.submission = QueueSubmission.of().withBuffers(cmdBuffer).withFence(this.frame.getFence());
+		this.submission = QueueSubmission.of()
+			.withBuffers(cmdBuffer)
+			.withFence(this.frame.getFence());
 		cmdBuffer.begin();
 	}
 	
 	@Override
-	public void viewport(Viewport viewport) {
-		super.viewport(viewport);
+	public void setViewport(Viewport viewport) {
+		super.setViewport(viewport);
 		this.viewport.applyChanges((v) -> {
 			try(MemoryStack stack = stackPush()) {
 				VkViewport.Buffer viewports = VkViewport.calloc(1, stack);
 				viewports.get(0)
-					.x(0.0F)
-					.y(v.height())
-					.minDepth(v.minDepth())
-					.maxDepth(v.maxDepth())
+					.x(v.x())
+					.y(v.y())
 					.width(v.width())
-					.height(-v.height());
+					.height(v.height())
+					.minDepth(v.minDepth())
+					.maxDepth(v.maxDepth());
 				this.frame.getCommandBuffer().setViewport(0, viewports);
 			}
 		});
 	}
 	
 	@Override
-	public void scissor(Scissor scissor) {
-		super.scissor(scissor);
+	public void setScissor(Scissor scissor) {
+		super.setScissor(scissor);
 		this.scissor.applyChanges((s) -> {
 			try(MemoryStack stack = stackPush()) {
 				VkRect2D.Buffer scissors = VkRect2D.calloc(1, stack);
@@ -110,23 +113,23 @@ class VkContext extends Context {
 	}
 
 	@Override
-	public void wait(Semaphore semaphore, Stage stage) {
-		this.submission.withWait(semaphore, stage);
+	public void sync(IContextSync sync, Stage stage) {
+		this.submission.withWait(sync, stage);
 	}
 
 	@Override
-	public void signal(Semaphore semaphore) {
-		this.submission.withSignal(semaphore);
+	public void alert(IContextSync... syncs) {
+		this.submission.withSignal(syncs);
 	}
 
 	@Override
-	public void insert(GpuFence fence) {
+	public void sync(LocalSync fence) {
 		try(MemoryStack stack = stackPush()) {
-			List<ImageFence> imgFences = fence.getImageFences();
+			List<ImageSync> imgFences = fence.getImageSync();
 			VkImageMemoryBarrier.Buffer barriers = VkImageMemoryBarrier.calloc(imgFences.size(), stack);
 			
 			for(int i = 0; i < imgFences.size(); i++) {
-				ImageFence imgFence = imgFences.get(i);
+				ImageSync imgFence = imgFences.get(i);
 				barriers.get(i)
 					.sType$Default()
 					.srcAccessMask(imgFence.getSrcAccess())
@@ -140,7 +143,7 @@ class VkContext extends Context {
 						.aspectMask(IVkType.bitMask(VkUtils.getAspect(imgFence.getImage().getUsage())))
 						.baseArrayLayer(imgFence.getBaseLayer())
 						.baseMipLevel(imgFence.getBaseMipLevel())
-						.layerCount(imgFence.getImage().getLayers())
+						.layerCount(imgFence.getImage().getLayerCount())
 						.levelCount(imgFence.getImage().getMipLevels()));
 				}
 				
@@ -153,18 +156,6 @@ class VkContext extends Context {
 				barriers
 			);
 		}
-	}
-
-	@Override
-	public void draw(int instanceCount, int start, int amount) {
-		this.applyState();
-		this.frame.getCommandBuffer().draw(amount, instanceCount, start, 0);
-	}
-
-	@Override
-	public void drawIndexed(int instanceCount, int vertexStart, int indexStart, int amount) {
-		this.applyState();
-		this.frame.getCommandBuffer().drawIndexed(amount, instanceCount, vertexStart, indexStart, 0);
 	}
 
 	@Override
@@ -187,7 +178,7 @@ class VkContext extends Context {
 		this.needsStateUpdate = true;
 	}
 	
-	private void applyState() {
+	void applyState() {
 		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
 		
 		if(this.needsStateUpdate) {
@@ -234,14 +225,14 @@ class VkContext extends Context {
 		}
 				
 		this.vertexBuffers.applyChanges((buffers) -> {
-			VertexBuffer[] vbs = new VertexBuffer[buffers.size()];
+			VertexBuffer[] vertexBuffers = new VertexBuffer[buffers.size()];
 				
-			for(int i = 0; i < vbs.length; i++) {
+			for(int i = 0; i < vertexBuffers.length; i++) {
 				IPair<VertexFormat, IDeviceBuffer> pair = buffers.get(i);
-				vbs[i] = new VertexBuffer(pair.right(), 0);
+				vertexBuffers[i] = new VertexBuffer(pair.right(), 0);
 			}
 			
-			cmdBuffer.bindVertexBuffers(0, vbs);
+			cmdBuffer.bindVertexBuffers(0, vertexBuffers);
 		});
 		
 		this.indexBuffer.applyChanges((buffer) -> {

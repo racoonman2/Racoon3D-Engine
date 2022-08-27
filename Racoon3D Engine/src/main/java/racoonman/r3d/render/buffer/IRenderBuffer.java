@@ -3,11 +3,10 @@ package racoonman.r3d.render.buffer;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
-import racoonman.r3d.render.api.objects.IBindable;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.vulkan.types.BufferUsage;
-import racoonman.r3d.render.api.vulkan.types.Property;
+import racoonman.r3d.render.api.objects.RenderPass;
+import racoonman.r3d.render.api.types.BufferUsage;
+import racoonman.r3d.render.api.types.Property;
 import racoonman.r3d.render.memory.Allocation;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.vertex.RenderBufferData;
@@ -15,8 +14,8 @@ import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.ArrayUtil;
 import racoonman.r3d.util.IPair;
 
-public interface IRenderBuffer extends IBindable {
-	void draw(Context context, int instanceCount);
+public interface IRenderBuffer {
+	void draw(RenderPass pass, int instanceCount);
 
 	//TODO void drawRange(RenderContext context, int instanceCount, int start, int amount);
 

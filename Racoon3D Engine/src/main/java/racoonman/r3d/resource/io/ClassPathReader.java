@@ -118,7 +118,7 @@ public class ClassPathReader {
 	}
 	
 	private static String getDomain() {
-		return R3DRuntime.getClient().id();
+		return R3DRuntime.getClient().name();
 	}
 	
 	private static String[] getRoots() {

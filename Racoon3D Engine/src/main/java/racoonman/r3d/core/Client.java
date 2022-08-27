@@ -5,7 +5,7 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Client {
-	String id();
+	String name();
 	
 	String[] roots();
 }

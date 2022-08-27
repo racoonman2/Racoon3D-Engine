@@ -4,9 +4,9 @@ import java.util.Arrays;
 
 import org.lwjgl.system.MemoryUtil;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
+import racoonman.r3d.render.state.IState;
 
 class VkShaderProgram implements IShaderProgram {
 	private IShader[] shaders;
@@ -21,8 +21,8 @@ class VkShaderProgram implements IShaderProgram {
 	}
 	
 	@Override
-	public void bind(Context context) {
-		context.program(this);
+	public void bind(IState state) {
+		state.bindProgram(this);
 	}
 	
 	@Override

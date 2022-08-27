@@ -1,7 +1,5 @@
 package racoonman.r3d.render.memory;
 
-import java.util.concurrent.CompletableFuture;
-
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IImage;
 

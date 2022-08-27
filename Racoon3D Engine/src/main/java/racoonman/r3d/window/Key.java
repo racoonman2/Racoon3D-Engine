@@ -92,7 +92,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_WORLD_2;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_X;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_Y;
 
-import racoonman.r3d.window.api.glfw.Window;
+import racoonman.r3d.window.api.glfw.GLFWWindow;
 
 import static org.lwjgl.glfw.GLFW.*;
 
@@ -231,7 +231,7 @@ public enum Key implements IAction {
 	}
 
 	@Override
-	public Status getStatus(Window window) {
+	public Status getStatus(GLFWWindow window) {
 		return window.getKey(this);
 	}
 }

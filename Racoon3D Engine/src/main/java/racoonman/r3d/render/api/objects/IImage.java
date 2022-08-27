@@ -1,14 +1,24 @@
 package racoonman.r3d.render.api.objects;
 
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
+import org.lwjgl.system.NativeResource;
+
+import racoonman.r3d.render.api.ICopyable;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.ImageUsage;
 import racoonman.r3d.render.memory.IMemoryCopier;
 
-public interface IImage extends ICopyable<IImage> {
+public interface IImage extends ICopyable<IImage>, NativeResource {
 	long getHandle();
+	
+	Format getFormat();
 	
 	ImageUsage[] getUsage();
 	
-	int getLayers();
+	int getWidth();
+	
+	int getHeight();
+	
+	int getLayerCount();
 
 	int getMipLevels();
 	

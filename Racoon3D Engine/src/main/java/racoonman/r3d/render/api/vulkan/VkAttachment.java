@@ -1,12 +1,12 @@
 package racoonman.r3d.render.api.vulkan;
 
+import racoonman.r3d.render.TextureState;
 import racoonman.r3d.render.api.objects.IAttachment;
-import racoonman.r3d.render.api.objects.TextureState;
+import racoonman.r3d.render.api.types.Format;
+import racoonman.r3d.render.api.types.ImageUsage;
+import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.api.vulkan.ImageView.ImageViewBuilder;
 import racoonman.r3d.render.api.vulkan.VkImage.ImageBuilder;
-import racoonman.r3d.render.api.vulkan.types.Format;
-import racoonman.r3d.render.api.vulkan.types.ImageUsage;
-import racoonman.r3d.render.api.vulkan.types.ViewType;
 import racoonman.r3d.util.ArrayUtil;
 
 class VkAttachment implements IAttachment {
@@ -100,11 +100,6 @@ class VkAttachment implements IAttachment {
 	@Override
 	public ImageUsage[] getUsage() {
 		return this.imageView.getUsage();
-	}
-
-	@Override
-	public int getLayers() {
-		return this.imageView.getLayerCount();
 	}
 
 	@Override

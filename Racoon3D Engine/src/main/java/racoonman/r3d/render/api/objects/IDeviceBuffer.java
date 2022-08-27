@@ -2,6 +2,7 @@ package racoonman.r3d.render.api.objects;
 
 import java.nio.ByteBuffer;
 
+import racoonman.r3d.render.api.ICopyable;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.natives.IHandle;
 

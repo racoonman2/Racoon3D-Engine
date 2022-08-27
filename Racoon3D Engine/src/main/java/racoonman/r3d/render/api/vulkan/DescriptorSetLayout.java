@@ -13,8 +13,8 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutBinding;
 import org.lwjgl.vulkan.VkDescriptorSetLayoutCreateInfo;
 
-import racoonman.r3d.render.api.vulkan.types.DescriptorType;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
+import racoonman.r3d.render.api.types.DescriptorType;
+import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.resource.codec.ArrayCodec;

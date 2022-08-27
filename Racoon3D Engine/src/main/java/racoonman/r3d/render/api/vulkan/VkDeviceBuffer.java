@@ -13,9 +13,9 @@ import org.lwjgl.util.vma.VmaAllocationCreateInfo;
 import org.lwjgl.vulkan.VkBufferCreateInfo;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
-import racoonman.r3d.render.api.vulkan.types.BufferUsage;
-import racoonman.r3d.render.api.vulkan.types.IVkType;
-import racoonman.r3d.render.api.vulkan.types.Property;
+import racoonman.r3d.render.api.types.BufferUsage;
+import racoonman.r3d.render.api.types.IVkType;
+import racoonman.r3d.render.api.types.Property;
 import racoonman.r3d.util.ArrayUtil;
 
 class VkDeviceBuffer implements IDeviceBuffer {

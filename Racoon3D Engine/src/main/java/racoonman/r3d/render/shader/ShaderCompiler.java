@@ -1,6 +1,7 @@
 package racoonman.r3d.render.shader;
 
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryUtil.memByteBuffer;
+import static org.lwjgl.system.MemoryUtil.memUTF8;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_into_preprocessed_text;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_into_spv;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_add_macro_definition;
@@ -8,25 +9,22 @@ import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_initialize;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_auto_bind_uniforms;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_auto_map_locations;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_include_callbacks;
+import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_target_env;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compiler_initialize;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compiler_release;
+import static org.lwjgl.util.shaderc.Shaderc.shaderc_env_version_vulkan_1_3;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_get_bytes;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_get_compilation_status;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_get_error_message;
-import static org.lwjgl.util.shaderc.Shaderc.*;
+import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_release;
+import static org.lwjgl.util.shaderc.Shaderc.shaderc_target_env_vulkan;
 
 import java.nio.ByteBuffer;
 
-import org.antlr.v4.runtime.tree.ParseTreeListener;
-import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.shaderc.ShadercIncludeResult;
 
-import io.github.douira.glsl_transformer.GLSLParser;
-import io.github.douira.glsl_transformer.GLSLParser.TypeAndInitDeclarationContext;
-import io.github.douira.glsl_transformer.GLSLParserBaseListener;
 import io.github.douira.glsl_transformer.ast.query.Root;
 import io.github.douira.glsl_transformer.ast.transform.ASTTransformer;
-import io.github.douira.glsl_transformer.basic.EnhancedParser;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.render.shader.parsing.IShaderProcessor;
 import racoonman.r3d.resource.io.ClassPathReader;
@@ -58,11 +56,12 @@ public class ShaderCompiler implements IHandle {
 			}
 		}
 
-		long preprocessed = shaderc_compile_into_preprocessed_text(this.handle, srcCode, stage.getShadercType(), name, entryPoint, this.options.asLong());
-		String shadercProcessed = MemoryUtil.memUTF8(shaderc_result_get_bytes(preprocessed));
-		
+		Result preprocessed = new Result(stage, name, shaderc_compile_into_preprocessed_text(this.handle, srcCode, stage.getShadercType(), name, entryPoint, this.options.asLong()));
+		preprocessed.check();
+		String shadercProcessed = memUTF8(preprocessed.getData());
 		String processedCode = this.processor.process(shadercProcessed);
-		shaderc_result_release(preprocessed);
+		preprocessed.close();
+
 		this.transformer.setTransformation((unit) -> {
 			Root.indexBuildSession(unit, () -> {
 				this.processor.transform(unit, processedCode);
@@ -71,13 +70,8 @@ public class ShaderCompiler implements IHandle {
 		
 		String transformedCode = this.transformer.transform(processedCode);
 		System.out.println(transformedCode);
-		Result result = new Result(this.parseLayout(transformedCode), shaderc_compile_into_spv(this.handle, transformedCode, stage.getShadercType(), name, entryPoint, this.options.asLong()));
-		
-		CompilationStatus status = result.getCompilationStatus();
-		if (status != CompilationStatus.SUCCESS) {
-			throw new RuntimeException("Shader [" + name + " - " + stage + "] + compilation failed with status " + status + ": " + result.getErrorMessage());
-		}
-		
+		Result result = new Result(stage, name, shaderc_compile_into_spv(this.handle, transformedCode, stage.getShadercType(), name, entryPoint, this.options.asLong()));
+		result.check();
 		return result;
 	}
 
@@ -94,41 +88,25 @@ public class ShaderCompiler implements IHandle {
 	public void free() {
 		shaderc_compiler_release(this.handle);
 	}
-
-	private ShaderLayout parseLayout(String srcCode) {
-		EnhancedParser parser = new EnhancedParser();
-		GLSLParser glslParser = parser.getParser();
-		ParseTreeListener listener = new GLSLParserBaseListener() {
-
-			@Override
-			public void exitTypeAndInitDeclaration(TypeAndInitDeclarationContext ctx) {
-				
-				
-				ctx.declarationMember().forEach((member) -> System.out.println(member.getText()));
-				super.enterTypeAndInitDeclaration(ctx);
-			}
-		};
-
-		glslParser.addParseListener(listener);
-		parser.parse(srcCode);
-		return new ShaderLayout();
-	}
 	
 	public static class Result implements IHandle {
-		private ShaderLayout layout;
+		private ShaderStage stage;
+		private String name;
 		private long handle;
 		private ByteBuffer data;
 
-		public Result(ShaderLayout layout, long handle) {
-			this.layout = layout;
+		public Result(ShaderStage stage, String name, long handle) {
 			this.handle = handle;
 			this.data = shaderc_result_get_bytes(handle);
 		}
 		
-		public ShaderLayout getLayout() {
-			return this.layout;
+		public void check() {
+			CompilationStatus status = this.getCompilationStatus();
+			if (status != CompilationStatus.SUCCESS) {
+				throw new RuntimeException("Shader [" + this.name + " - " + this.stage + "] + compilation failed with status " + status + ": " + this.getErrorMessage());
+			}
 		}
-		
+
 		public CompilationStatus getCompilationStatus() {
 			return IShadercType.byInt(shaderc_result_get_compilation_status(this.handle), CompilationStatus.values());
 		}

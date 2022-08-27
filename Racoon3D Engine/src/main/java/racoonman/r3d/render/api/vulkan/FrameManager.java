@@ -4,9 +4,9 @@ import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import racoonman.r3d.render.api.vulkan.types.Level;
-import racoonman.r3d.render.api.vulkan.types.Status;
-import racoonman.r3d.render.api.vulkan.types.SubmitMode;
+import racoonman.r3d.render.api.types.Level;
+import racoonman.r3d.render.api.types.Status;
+import racoonman.r3d.render.api.types.SubmitMode;
 
 class FrameManager {
 	private WorkPool pool;
