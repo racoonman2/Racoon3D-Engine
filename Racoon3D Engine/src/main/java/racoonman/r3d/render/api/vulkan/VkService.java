@@ -6,7 +6,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.lwjgl.system.NativeResource;
 
 import racoonman.r3d.render.Context;
-import racoonman.r3d.render.Work;
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
@@ -20,7 +19,7 @@ import racoonman.r3d.render.api.types.Format;
 import racoonman.r3d.render.api.types.ImageLayout;
 import racoonman.r3d.render.api.types.ImageUsage;
 import racoonman.r3d.render.api.types.Property;
-import racoonman.r3d.render.api.types.QueueFamily;
+import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.core.IRenderPlatform;
@@ -51,9 +50,9 @@ class VkService extends Service {
 		this.vulkan = new Vulkan(platform.getApiVersion(), platform.getEngineVersion(), platform.getEngineName(), platform.getAppName(), validate);
 		this.physicalDevice = PhysicalDevice.findPhysicalDevice(this.vulkan);
 		this.device = new Device(this.vulkan, this.physicalDevice, IDeviceExtension.DYNAMIC_RENDERING, IDeviceExtension.KHR_SWAPCHAIN, IDeviceExtension.MULTI_DRAW, IDeviceExtension.PUSH_DESCRIPTOR);
-		this.graphicsPool = new WorkPool(this.device, QueueFamily.GRAPHICS, 0);
-		this.computePool = new WorkPool(this.device, QueueFamily.COMPUTE, 0);
-		this.transferPool = new WorkPool(this.device, QueueFamily.TRANSFER, 0);
+		this.graphicsPool = new WorkPool(this.device, QueueType.GRAPHICS, 0);
+		this.computePool = new WorkPool(this.device, QueueType.COMPUTE, 0);
+		this.transferPool = new WorkPool(this.device, QueueType.TRANSFER, 0);
 		this.mappedMemory = new VkMappedRegion(this, Config.MAPPED_REGION_SIZE);
 		this.frameManager = new FrameManager(this.graphicsPool, this.device);
 		this.freeQueue = new ConcurrentLinkedQueue<>();
@@ -66,7 +65,7 @@ class VkService extends Service {
 
 	//TODO lookup queue based on index and type instead
 	@Override
-	public Context createContext(int queueIndex, Work type) {
+	public Context createContext(int queueIndex, QueueType type) {
 		return new VkContext(this.renderCache, switch(type) {
 			case GRAPHICS -> this.graphicsPool;
 			case COMPUTE -> this.computePool;

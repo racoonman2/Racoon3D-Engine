@@ -1,7 +1,6 @@
 package racoonman.r3d.render.api.types;
 
 import java.util.Collection;
-import java.util.List;
 
 public interface IVkType {
 	int getVkType();
@@ -20,12 +19,14 @@ public interface IVkType {
 		return null;
 	}
 
-	public static int[] asInts(List<? extends IVkType> types) {
+	public static int[] asInts(Collection<? extends IVkType> types) {
 		int[] ints = new int[types.size()];
 
-		for (int i = 0; i < ints.length; i++) {
-			ints[i] = types.get(i).getVkType();
-		}		
+		int index = 0;
+		for(IVkType type : types) {
+			ints[index] = type.getVkType();
+			index++;
+		}
 		
 		return ints;
 	}

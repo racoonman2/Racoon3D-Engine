@@ -4,7 +4,6 @@ import org.lwjgl.system.NativeResource;
 
 import racoonman.r3d.core.libraries.Libraries;
 import racoonman.r3d.render.Context;
-import racoonman.r3d.render.Work;
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IContextSync;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
@@ -19,6 +18,7 @@ import racoonman.r3d.render.api.types.Format;
 import racoonman.r3d.render.api.types.ImageLayout;
 import racoonman.r3d.render.api.types.ImageUsage;
 import racoonman.r3d.render.api.types.Property;
+import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.resource.ShaderLoader;
@@ -44,7 +44,7 @@ public abstract class Service implements AutoCloseable, IMemoryCopier {
 		return this.textureLoader.load(path);
 	}
 	
-	public abstract Context createContext(int queueIndex, Work type);
+	public abstract Context createContext(int queueIndex, QueueType queue);
 
 	public abstract IShader createShader(ShaderStage stage, String entry, String file, String src, String... args);
 

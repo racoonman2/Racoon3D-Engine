@@ -2,20 +2,24 @@ package racoonman.r3d.render.api.vulkan;
 
 import java.nio.LongBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 
-import racoonman.r3d.render.api.objects.IFence;
 import racoonman.r3d.render.api.objects.IContextSync;
+import racoonman.r3d.render.api.objects.IFence;
 import racoonman.r3d.render.api.types.Stage;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.util.Holder;
+import racoonman.r3d.util.IPair;
 
 //TODO this shouldn't be a record
-record QueueSubmission(List<CommandBuffer> commandBuffers, List<IContextSync> waits, List<Stage> stageMasks, List<IContextSync> signals, Holder<IFence> fence) {
+record QueueSubmission(List<CommandBuffer> commandBuffers, Set<IPair<IContextSync, Stage>> waits, Set<IContextSync> signals, Holder<IFence> fence) {
 	
 	public QueueSubmission withBuffers(CommandBuffer... buffers) {
 		for(CommandBuffer buffer : buffers) {
@@ -25,8 +29,7 @@ record QueueSubmission(List<CommandBuffer> commandBuffers, List<IContextSync> wa
 	}
 	
 	public QueueSubmission withWait(IContextSync sync, Stage stage) {
-		this.waits.add(sync);
-		this.stageMasks.add(stage);
+		this.waits.add(IPair.of(sync, stage));
 		return this;
 	}
 	
@@ -42,31 +45,31 @@ record QueueSubmission(List<CommandBuffer> commandBuffers, List<IContextSync> wa
 	
 	public static QueueSubmission of() {
 		return new QueueSubmission(
-			new ArrayList<>(), 
-			new ArrayList<>(), 
-			new ArrayList<>(), 
-			new ArrayList<>(), 
+			new ArrayList<>(),
+			new HashSet<>(),
+			new HashSet<>(),
 			new Holder<>());
 	}
 	
-	static LongBuffer toLongBuffer(List<? extends IHandle> handles, MemoryStack stack) {
-		int size = handles.size();
-		LongBuffer pointers = stack.mallocLong(size);
+	static LongBuffer toLongBuffer(Collection<? extends IHandle> handles, MemoryStack stack) {
+		LongBuffer longs = stack.mallocLong(handles.size());
 	
-		for(int i = 0; i < size; i++) {
-			pointers.put(i, handles.get(i).asLong());
+		for(IHandle handle : handles) {
+			longs.put(handle.asLong());
 		}
 		
-		return pointers;
+		longs.rewind();
+		return longs;
 	}
 	
-	static PointerBuffer toPointerBuffer(List<? extends IHandle> handles, MemoryStack stack) {
+	static PointerBuffer toPointerBuffer(Collection<? extends IHandle> handles, MemoryStack stack) {
 		PointerBuffer pointers = stack.mallocPointer(handles.size());
-		
-		for(int i = 0; i < handles.size(); i++) {
-			pointers.put(i, handles.get(i).asLong());
+
+		for(IHandle handle : handles) {
+			pointers.put(handle.asLong());
 		}
-		
+
+		pointers.rewind();
 		return pointers;
 	}
 }

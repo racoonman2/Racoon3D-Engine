@@ -65,7 +65,6 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 	public RenderPass beginPass(IFramebuffer framebuffer) {
 		this.setViewport(framebuffer.getViewport(0.0F, 1.0F));
 		this.setScissor(framebuffer.getScissor());
-		framebuffer.acquire();
 		return this.createPass(framebuffer);
 	}
 	
