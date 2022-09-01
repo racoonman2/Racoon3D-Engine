@@ -11,13 +11,13 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkSemaphoreCreateInfo;
 
-import racoonman.r3d.render.api.objects.IContextSync;
+import racoonman.r3d.render.api.objects.IDeviceSync;
 
-class VkSemaphore implements IContextSync {
+class VkDeviceSync implements IDeviceSync {
 	private Device device;
 	private long handle;
 	
-	public VkSemaphore(Device device) {
+	public VkDeviceSync(Device device) {
 		try(MemoryStack stack = stackPush()) {
 			this.device = device;
 		

@@ -66,7 +66,7 @@ public class Attachment implements IAttachment {
 	}
 
 	@Override
-	public IAttachment makeChild(int newWidth, int newHeight) {
-		return this.delegate.makeChild(newWidth, newHeight);
+	public IAttachment copy(int newWidth, int newHeight) {
+		return this.delegate.copy(newWidth, newHeight);
 	}
 }

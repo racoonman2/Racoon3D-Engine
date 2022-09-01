@@ -13,6 +13,9 @@ import static org.lwjgl.vulkan.VK10.vkQueueSubmit;
 import static org.lwjgl.vulkan.VK10.vkQueueWaitIdle;
 
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 import org.lwjgl.PointerBuffer;
@@ -21,18 +24,24 @@ import org.lwjgl.vulkan.VkDevice;
 import org.lwjgl.vulkan.VkQueue;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 import org.lwjgl.vulkan.VkSubmitInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import racoonman.r3d.core.R3DRuntime;
-import racoonman.r3d.render.api.objects.IContextSync;
-import racoonman.r3d.render.api.objects.IFence;
+import racoonman.r3d.render.api.objects.IDeviceSync;
+import racoonman.r3d.render.api.objects.IHostSync;
 import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.types.IVkType;
-import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.api.types.Stage;
+import racoonman.r3d.render.api.types.Work;
+import racoonman.r3d.render.natives.IHandle;
+import racoonman.r3d.util.ArrayUtil;
 import racoonman.r3d.util.Holder;
 import racoonman.r3d.util.IPair;
 
-abstract class DeviceQueue {
+abstract class DeviceQueue implements IDispatchableHandle<VkQueue> {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DeviceQueue.class);
+	
 	private Device device;
 	private VkQueue queue;
 	private int queueFamilyIndex;
@@ -56,15 +65,15 @@ abstract class DeviceQueue {
 		try(MemoryStack stack = stackPush()) {
 			VkSubmitInfo info = VkSubmitInfo.calloc(stack)
 				.sType(VK_STRUCTURE_TYPE_SUBMIT_INFO)
-				.pCommandBuffers(QueueSubmission.toPointerBuffer(submission.commandBuffers(), stack))
-				.pSignalSemaphores(QueueSubmission.toLongBuffer(submission.signals(), stack));
+				.pCommandBuffers(toPointerBuffer(submission.commandBuffers(), stack))
+				.pSignalSemaphores(toLongBuffer(submission.signals(), stack));
 			
-			Set<IPair<IContextSync, Stage>> waits = submission.waits();
+			Set<IPair<IDeviceSync, Stage>> waits = submission.waits();
 			info.waitSemaphoreCount(waits.size())
-				.pWaitSemaphores(QueueSubmission.toLongBuffer(waits.stream().map(IPair::left).toList(), stack))
-				.pWaitDstStageMask(stack.ints(IVkType.asInts(submission.waits().stream().map(IPair::right).toList())));
+				.pWaitSemaphores(toLongBuffer(waits.stream().map(IPair::left).toList(), stack))
+				.pWaitDstStageMask(stack.ints(IVkType.bitMask(submission.waits().stream().map(IPair::right).toList())));
 			
-			Holder<IFence> fence = submission.fence();
+			Holder<IHostSync> fence = submission.hostSync();
 			int status = vkQueueSubmit(this.queue, info, fence.isPresent() ? fence.getValue().asLong() : 0L);
 			
 			if(status != VK_SUCCESS) {
@@ -86,8 +95,14 @@ abstract class DeviceQueue {
 		return this.device;
 	}
 	
+	@Override
 	public VkQueue get() {
 		return this.queue;
+	}
+	
+	@Override
+	public void free() {
+		//queues are freed by the device
 	}
 
 	public int getQueueFamilyIndex() {
@@ -100,7 +115,7 @@ abstract class DeviceQueue {
 
 	protected abstract int getIndexForFamily();
 
-	public static final DeviceQueue work(Device device, QueueType family, int index) {
+	public static final DeviceQueue work(Device device, int index, Work... flags) {
 		return new DeviceQueue(device, index) {
 
 			@Override
@@ -108,14 +123,32 @@ abstract class DeviceQueue {
 				VkQueueFamilyProperties.Buffer queueProps = device.getPhysicalDevice().getQueueFamilyProperties();
 				
 				int queueFamilyCount = queueProps.capacity();
-				int vkQueueFamily = family.getVkType();
 				
+				//first pass looks for dedicated queues
 				for(int i = 0; i < queueFamilyCount; i++) {
 					VkQueueFamilyProperties properties = queueProps.get(i);
+					Work[] queueFlags = IVkType.toArray(properties.queueFlags(), Work.values(), Work[]::new);
 					
-					if((properties.queueFlags() & vkQueueFamily) == vkQueueFamily) {
+					if(ArrayUtil.softEquals(queueFlags, flags)) {
+						LOGGER.info("Found dedicated queue for flags {}", Arrays.toString(flags));
 						return i;
 					}
+				}
+				
+				//second pass looks for generic queues
+				search:
+				for(int i = 0; i < queueFamilyCount; i++) {
+					VkQueueFamilyProperties properties = queueProps.get(i);
+					Work[] queueFlags = IVkType.toArray(properties.queueFlags(), Work.values(), Work[]::new);
+					
+					for(Work flag : flags) {
+						if(!ArrayUtil.has(queueFlags, flag)) {
+							continue search;
+						}
+					}
+
+					LOGGER.info("Found generic queue; Requested flags {}, queue flags {}", Arrays.toString(flags), Arrays.toString(queueFlags));
+					return i;
 				}
 				
 				throw new IllegalStateException("Unable to lookup queue family index");
@@ -147,5 +180,27 @@ abstract class DeviceQueue {
 				}
 			}
 		};
+	}
+
+	static LongBuffer toLongBuffer(Collection<? extends IHandle> handles, MemoryStack stack) {
+		LongBuffer longs = stack.mallocLong(handles.size());
+	
+		for(IHandle handle : handles) {
+			longs.put(handle.asLong());
+		}
+		
+		longs.rewind();
+		return longs;
+	}
+	
+	static PointerBuffer toPointerBuffer(Collection<? extends IDispatchableHandle<?>> handles, MemoryStack stack) {
+		PointerBuffer pointers = stack.mallocPointer(handles.size());
+
+		for(IDispatchableHandle<?> handle : handles) {
+			pointers.put(handle.get());
+		}
+
+		pointers.rewind();
+		return pointers;
 	}
 }

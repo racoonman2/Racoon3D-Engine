@@ -1,12 +1,29 @@
 package racoonman.r3d.render.api.types;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.function.IntFunction;
 
 public interface IVkType {
 	int getVkType();
 
 	public static int nil() {
 		return 0;
+	}
+	
+	public static <T extends IVkType> T[] toArray(int type, T[] values, IntFunction<T[]> newArray) {
+		List<T> found = new ArrayList<>();
+		
+		for(T t : values) {
+			int vkType = t.getVkType();
+			
+			if((type & vkType) == vkType) {
+				found.add(t);
+			}
+		}
+		
+		return found.toArray(newArray);
 	}
 
 	public static <T extends IVkType> T byInt(int type, T[] values) {
@@ -61,6 +78,7 @@ public interface IVkType {
 		return mask;
 	}
 
+	//TODO remove, this should return an array instead
 	public static <T extends IVkType> T fromBitMask(int bitMask, T[] values, T fallback) {
 		for (T t : values) {
 			int type = t.getVkType();

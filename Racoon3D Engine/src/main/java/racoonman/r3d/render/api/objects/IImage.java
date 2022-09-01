@@ -22,6 +22,8 @@ public interface IImage extends ICopyable<IImage>, NativeResource {
 
 	int getMipLevels();
 	
+	//int getLayers(int begin, int end);
+	
 	default void copy(IMemoryCopier copier, IImage image) {
 		copier.copy(image, this);
 	}

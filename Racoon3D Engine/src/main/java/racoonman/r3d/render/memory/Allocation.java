@@ -6,8 +6,8 @@ import java.util.List;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.types.BufferUsage;
 import racoonman.r3d.render.api.types.Property;
-import racoonman.r3d.render.core.Service;
 import racoonman.r3d.render.core.Driver;
+import racoonman.r3d.render.core.Service;
 
 public class Allocation {
 	private List<BufferUsage> usage;

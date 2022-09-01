@@ -18,18 +18,20 @@ import racoonman.r3d.render.Context;
 import racoonman.r3d.render.Scissor;
 import racoonman.r3d.render.Viewport;
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.objects.IDeviceSync;
 import racoonman.r3d.render.api.objects.IFramebuffer;
-import racoonman.r3d.render.api.objects.IContextSync;
+import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.RenderPass;
 import racoonman.r3d.render.api.sync.LocalSync;
 import racoonman.r3d.render.api.sync.LocalSync.ImageSync;
 import racoonman.r3d.render.api.types.BindPoint;
+import racoonman.r3d.render.api.types.Dependency;
 import racoonman.r3d.render.api.types.DescriptorType;
 import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.api.types.IndexType;
 import racoonman.r3d.render.api.types.Stage;
-import racoonman.r3d.render.api.vulkan.CommandBuffer.VertexBuffer;
 import racoonman.r3d.render.api.vulkan.FrameManager.Frame;
+import racoonman.r3d.render.compute.Compute;
 import racoonman.r3d.render.matrix.IMatrixType;
 import racoonman.r3d.render.shader.ShaderStage;
 import racoonman.r3d.render.state.uniform.UniformBuffer;
@@ -37,10 +39,12 @@ import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
 
 class VkContext extends Context {
-	private RenderCache cache;
-	private WorkPool pool;
+	private GraphicsCache graphicsCache;
+	private ComputeCache computeCache;
+	private VkWorkPool pool;
 	private Frame frame;
-	private State<IPipeline> pipeline;
+	private State<Pipeline> graphicsPipeline;
+	private State<Pipeline> computePipeline;
 	private UniformBuffer uniformBuffer;
 	private Matrix4fStack proj;
 	private Matrix4fStack view;
@@ -51,11 +55,13 @@ class VkContext extends Context {
 	private boolean needsStateUpdate;
 	private QueueSubmission submission;
 	
-	public VkContext(RenderCache cache, WorkPool pool, Frame frame, UniformBuffer uniformBuffer) {
-		this.cache = cache;
+	public VkContext(GraphicsCache graphicsCache, ComputeCache computeCache, VkWorkPool pool, Frame frame, UniformBuffer uniformBuffer) {
+		this.graphicsCache = graphicsCache;
+		this.computeCache = computeCache;
 		this.pool = pool;
 		this.frame = frame;
-		this.pipeline = new State<>();
+		this.graphicsPipeline = new State<>();
+		this.computePipeline = new State<>();
 		this.uniformBuffer = uniformBuffer;
 		this.proj = this.getMatrix(IMatrixType.PROJECTION);
 		this.view = this.getMatrix(IMatrixType.VIEW);
@@ -67,14 +73,14 @@ class VkContext extends Context {
 		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
 		this.submission = QueueSubmission.of()
 			.withBuffers(cmdBuffer)
-			.withFence(this.frame.getFence());
+			.withHostSync(this.frame.getHostSync());
 		cmdBuffer.begin();
 	}
 	
 	@Override
 	public void setViewport(Viewport viewport) {
 		super.setViewport(viewport);
-		this.viewport.applyChanges((v) -> {
+		this.viewport.update((v) -> {
 			try(MemoryStack stack = stackPush()) {
 				VkViewport.Buffer viewports = VkViewport.calloc(1, stack);
 				viewports.get(0)
@@ -92,7 +98,7 @@ class VkContext extends Context {
 	@Override
 	public void setScissor(Scissor scissor) {
 		super.setScissor(scissor);
-		this.scissor.applyChanges((s) -> {
+		this.scissor.update((s) -> {
 			try(MemoryStack stack = stackPush()) {
 				VkRect2D.Buffer scissors = VkRect2D.calloc(1, stack);
 				scissors.get(0)
@@ -111,46 +117,46 @@ class VkContext extends Context {
 	public RenderPass createPass(IFramebuffer framebuffer) {
 		return (this.pass = Optional.of(new VkRenderPass(this, this.frame.getCommandBuffer(), framebuffer))).get();
 	}
-
+	
 	@Override
-	public void sync(IContextSync sync, Stage stage) {
+	public void await(IDeviceSync sync, Stage stage) {
 		this.submission.withWait(sync, stage);
 	}
-
+	
 	@Override
-	public void alert(IContextSync... syncs) {
+	public void alert(IDeviceSync... syncs) {
 		this.submission.withSignal(syncs);
 	}
 
 	@Override
-	public void sync(LocalSync fence) {
+	public void await(LocalSync sync) {
 		try(MemoryStack stack = stackPush()) {
-			List<ImageSync> imgFences = fence.getImageSync();
-			VkImageMemoryBarrier.Buffer barriers = VkImageMemoryBarrier.calloc(imgFences.size(), stack);
+			List<ImageSync> imageSyncs = sync.getImageSync();
+			VkImageMemoryBarrier.Buffer barriers = VkImageMemoryBarrier.calloc(imageSyncs.size(), stack);
 			
-			for(int i = 0; i < imgFences.size(); i++) {
-				ImageSync imgFence = imgFences.get(i);
+			for(int i = 0; i < imageSyncs.size(); i++) {
+				ImageSync imageSync = imageSyncs.get(i);
 				barriers.get(i)
 					.sType$Default()
-					.srcAccessMask(imgFence.getSrcAccess())
-					.dstAccessMask(imgFence.getDstAccess())
-					.oldLayout(imgFence.getOldLayout().getVkType())
-					.newLayout(imgFence.getNewLayout().getVkType())
-					.srcQueueFamilyIndex(imgFence.getSrcQueue())
-					.dstQueueFamilyIndex(imgFence.getDstQueue())
-					.image(imgFence.getImage().getHandle())
+					.srcAccessMask(imageSync.getSrcAccess())
+					.dstAccessMask(imageSync.getDstAccess())
+					.oldLayout(imageSync.getOldLayout().getVkType())
+					.newLayout(imageSync.getNewLayout().getVkType())
+					.srcQueueFamilyIndex(imageSync.getSrcQueue())
+					.dstQueueFamilyIndex(imageSync.getDstQueue())
+					.image(imageSync.getImage().getHandle())
 					.subresourceRange((range) -> range
-						.aspectMask(IVkType.bitMask(VkUtils.getAspect(imgFence.getImage().getUsage())))
-						.baseArrayLayer(imgFence.getBaseLayer())
-						.baseMipLevel(imgFence.getBaseMipLevel())
-						.layerCount(imgFence.getImage().getLayerCount())
-						.levelCount(imgFence.getImage().getMipLevels()));
+						.aspectMask(IVkType.bitMask(VkUtils.getAspect(imageSync.getImage().getUsage())))
+						.baseArrayLayer(imageSync.getBaseLayer())
+						.baseMipLevel(imageSync.getBaseMipLevel())
+						.layerCount(imageSync.getImage().getLayerCount())
+						.levelCount(imageSync.getImage().getMipLevels()));
 				}
-				
+
 			this.frame.getCommandBuffer().pipelineBarrier(
-				fence.getSrcStages(), 
-				fence.getDstStages(),
-				fence.getDependencies(), 
+				sync.getSrcStages(), 
+				sync.getDstStages(),
+				Dependency.REGION.getVkType(), 
 				null, 
 				null, 
 				barriers
@@ -159,11 +165,17 @@ class VkContext extends Context {
 	}
 
 	@Override
-	public void submit() {
-		this.applyState();
-		
-		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
-		cmdBuffer.end();
+	public Compute dispatch(IShader shader, int xThreads, int yThreads, int zThreads) {
+		CommandBuffer buffer = this.frame.getCommandBuffer();
+		this.computePipeline.set(this.computeCache.getPipeline(new ComputeState(shader)));
+		this.computePipeline.update((p) -> buffer.bindPipeline(BindPoint.COMPUTE, p));
+		buffer.dispatch(xThreads, yThreads, zThreads);
+		return new Compute(this);
+	}
+
+	@Override
+	protected void submit() {
+		this.frame.getCommandBuffer().end();
 
 		this.pool.submit(this.submission);
 	}
@@ -182,13 +194,13 @@ class VkContext extends Context {
 		CommandBuffer cmdBuffer = this.frame.getCommandBuffer();
 		
 		if(this.needsStateUpdate) {
-			this.cache.get(this.makeState()).ifPresent((pipeline) -> {
-				this.pipeline.set(pipeline);
-				this.pipeline.applyChanges(cmdBuffer::bindPipeline);
+			this.graphicsCache.getPipeline(this.makeState()).ifPresent((pipeline) -> {
+				this.graphicsPipeline.set(pipeline);
+				this.graphicsPipeline.update((p) -> cmdBuffer.bindPipeline(BindPoint.GRAPHICS, p));
 
 				PipelineLayout layout = pipeline.getLayout();
 
-				this.program.applyChanges((program) -> {
+				this.program.update((program) -> {
 					IDeviceBuffer buffer = this.uniformBuffer.getDeviceBuffer(); 
 
 					try(MemoryStack stack = stackPush()) {
@@ -224,18 +236,11 @@ class VkContext extends Context {
 			this.needsStateUpdate = false;	
 		}
 				
-		this.vertexBuffers.applyChanges((buffers) -> {
-			VertexBuffer[] vertexBuffers = new VertexBuffer[buffers.size()];
-				
-			for(int i = 0; i < vertexBuffers.length; i++) {
-				IPair<VertexFormat, IDeviceBuffer> pair = buffers.get(i);
-				vertexBuffers[i] = new VertexBuffer(pair.right(), 0);
-			}
-			
-			cmdBuffer.bindVertexBuffers(0, vertexBuffers);
+		this.vertexBuffers.update((buffers) -> {
+			cmdBuffer.bindVertexBuffers(0, buffers.stream().map((pair) -> IPair.of(pair.right(), 0L)).toList());
 		});
 		
-		this.indexBuffer.applyChanges((buffer) -> {
+		this.indexBuffer.update((buffer) -> {
 			cmdBuffer.bindIndexBuffer(buffer, 0, IndexType.UINT32);
 		});
 		
@@ -244,11 +249,11 @@ class VkContext extends Context {
 		this.lastModel.set(this.model);
 	}
 	
-	private PipelineState makeState() {
-		return new PipelineState(
+	private GraphicsState makeState() {
+		return new GraphicsState(
 			this.getProgram(),
-			this.vertexBuffers.getValues().stream().map(IPair::left).toArray(VertexFormat[]::new),
-			this.getTopology(),
+			this.vertexBuffers.getValue().stream().map(IPair::left).toArray(VertexFormat[]::new),
+			this.getMode(),
 			this.getPolygonMode(),
 			this.getCullMode(),
 			this.getLineWidth(),

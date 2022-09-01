@@ -6,7 +6,6 @@ import java.util.List;
 import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IImage;
 import racoonman.r3d.render.api.types.Access;
-import racoonman.r3d.render.api.types.Dependency;
 import racoonman.r3d.render.api.types.ImageLayout;
 import racoonman.r3d.render.api.types.Stage;
 
@@ -16,7 +15,6 @@ public class LocalSync {
 	private List<ImageSync> imageSyncs;
 	private int srcStages;
 	private int dstStages;
-	private int dependencies;
 	
 	public LocalSync() {
 		this.imageSyncs = new ArrayList<>();
@@ -28,10 +26,6 @@ public class LocalSync {
 	
 	public int getDstStages() {
 		return this.dstStages;
-	}
-	
-	public int getDependencies() {
-		return this.dependencies;
 	}
 	
 	public List<ImageSync> getImageSync() {
@@ -57,13 +51,8 @@ public class LocalSync {
 		return this;
 	}
 	
-	public LocalSync withDependency(Dependency dependency) {
-		this.dependencies |= dependency.getVkType();
-		return this;
-	}
-	
 	public void await(Context ctx) {
-		ctx.sync(this);
+		ctx.await(this);
 	}
 	
 	public static class ImageSync {

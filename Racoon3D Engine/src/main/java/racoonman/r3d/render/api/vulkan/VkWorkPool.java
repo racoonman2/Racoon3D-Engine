@@ -8,24 +8,34 @@ import java.util.function.Function;
 
 import org.lwjgl.system.MemoryStack;
 
+import racoonman.r3d.render.Context;
+import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.objects.IWorkPool;
 import racoonman.r3d.render.api.types.Level;
-import racoonman.r3d.render.api.types.QueueType;
 import racoonman.r3d.render.api.types.SubmitMode;
+import racoonman.r3d.render.api.types.Work;
 
-class WorkPool {
+class VkWorkPool implements IWorkPool {
 	private Device device;
+	private VkService service;
 	private DeviceQueue queue;
 	private CommandPool pool;
 	
-	public WorkPool(Device device, QueueType queueFamily, int index) {
+	public VkWorkPool(Device device, VkService service, int queueIndex, Work... queueFlags) {
 		this.device = device;
-		this.queue = DeviceQueue.work(device, queueFamily, index);
+		this.service = service;
+		this.queue = DeviceQueue.work(device, queueIndex, queueFlags);
 		this.pool = new CommandPool(device, this.queue);
 	}
 
 	//TODO remove
 	public void join() {
 		this.queue.waitIdle();
+	}
+
+	@Override
+	public Context dispatch() {
+		return this.service.createContext(this);
 	}
 	
 	public CommandBuffer dispatch(Level level, SubmitMode submitMode) {
@@ -43,12 +53,17 @@ class WorkPool {
 	public void free() {
 		this.pool.free();
 	}
+
+	@Override
+	public void copy(IDeviceBuffer src, IDeviceBuffer dst) {
+		this.runAsync((cmd) -> VkUtils.copy(cmd, src, dst)).join();
+	}
 	
 	//TODO remove
 	public <T> CompletableFuture<T> supplyAsync(Function<CommandBuffer, T> task) {
 		CommandBuffer buffer = this.dispatch(Level.PRIMARY, SubmitMode.SINGLE);
 		return CompletableFuture.supplyAsync(() -> {
-			VkFence fence = new VkFence(this.device, true);
+			VkHostSync fence = new VkHostSync(this.device, true);
 		
 			buffer.begin();
 			T result = task.apply(buffer);
@@ -57,7 +72,7 @@ class WorkPool {
 			fence.reset();
 			
 			try(MemoryStack stack = stackPush()) {
-				this.queue.submit(QueueSubmission.of().withBuffers(buffer).withFence(fence));
+				this.queue.submit(QueueSubmission.of().withBuffers(buffer).withHostSync(fence));
 			}
 			
 			fence.await(Long.MAX_VALUE);

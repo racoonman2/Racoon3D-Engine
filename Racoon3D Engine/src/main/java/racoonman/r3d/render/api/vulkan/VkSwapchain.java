@@ -7,7 +7,6 @@ import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceCapabilities
 import static org.lwjgl.vulkan.KHRSurface.vkGetPhysicalDeviceSurfaceFormatsKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_ERROR_OUT_OF_DATE_KHR;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-import static org.lwjgl.vulkan.KHRSwapchain.VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 import static org.lwjgl.vulkan.KHRSwapchain.VK_SUBOPTIMAL_KHR;
 import static org.lwjgl.vulkan.KHRSwapchain.vkAcquireNextImageKHR;
 import static org.lwjgl.vulkan.KHRSwapchain.vkCreateSwapchainKHR;
@@ -32,6 +31,7 @@ import org.lwjgl.vulkan.VkSurfaceCapabilitiesKHR;
 import org.lwjgl.vulkan.VkSurfaceFormatKHR;
 import org.lwjgl.vulkan.VkSwapchainCreateInfoKHR;
 
+import racoonman.r3d.render.api.objects.IDeviceSync;
 import racoonman.r3d.render.api.objects.ISwapchain;
 import racoonman.r3d.render.api.objects.IWindowSurface;
 import racoonman.r3d.render.api.types.Aspect;
@@ -43,7 +43,10 @@ import racoonman.r3d.render.api.types.ImageUsage;
 import racoonman.r3d.render.api.types.SampleCount;
 import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.api.vulkan.ImageView.ImageViewBuilder;
+import racoonman.r3d.render.core.Driver;
 import racoonman.r3d.render.natives.IHandle;
+import racoonman.r3d.util.IPair;
+import racoonman.r3d.util.math.Mathi;
 
 //FIXME Frame[] length and actual frame count may differ if device does not support requested number of frames
 //TODO clean this up, all swapchain and window code right now is pretty messy
@@ -51,6 +54,7 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 	private IWindowSurface surface;
 	private DeviceQueue queue;
 	private long handle;
+	private IDeviceSync available;
 	
 	public VkSwapchain(IWindowSurface surface, DeviceQueue queue, int frameCount) {
 		this(surface, queue, frameCount, Optional.empty());
@@ -72,17 +76,17 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 			VkSurfaceCapabilitiesKHR surfaceCaps = VkSurfaceCapabilitiesKHR.calloc(stack);
 			vkAssert(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice.get(), this.surface.asLong(), surfaceCaps), "Error retrieving surface capabilities");
 			
-			SurfaceFormat format = this.getSurfaceFormat(physicalDevice);
+			IPair<Integer, Integer> format = this.getSurfaceFormat(physicalDevice);
 			int minFrameCount = this.getFrameCount(surfaceCaps);
 
 			VkExtent2D extent = this.getSwapChainExtent(stack, surfaceCaps);
 			
 			VkSwapchainCreateInfoKHR swapchainInfo = VkSwapchainCreateInfoKHR.calloc(stack)
-				.sType(VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR)
+				.sType$Default()
 				.surface(this.surface.asLong())
 				.minImageCount(minFrameCount)
-				.imageFormat(format.imageFormat().getVkType())
-				.imageColorSpace(format.colorSpace())
+				.imageFormat(format.left())
+				.imageColorSpace(format.right())
 				.imageExtent(extent)
 				.imageArrayLayers(1)
 				.imageUsage(ImageUsage.COLOR.getVkType())
@@ -93,28 +97,22 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 				.presentMode(surface.getPresentMode().getVkType());
 			old.ifPresent(o -> {
 				swapchainInfo.oldSwapchain(IHandle.getSafely(o));
-				
-				o.getColorAttachments()
-					.stream()
-					.filter((attachment) -> !(attachment instanceof SwapchainAttachment))
-					.map((attachment) -> attachment.makeChild(this.width, this.height)).forEach(this::withColor);
-				o.getDepthAttachment()
-					.map((attachment) -> attachment.makeChild(this.width, this.height))
-					.ifPresent(this::withDepth);
 			});
 				
 			LongBuffer pointer = stack.mallocLong(1);
 			vkAssert(vkCreateSwapchainKHR(this.device.get(), swapchainInfo, null, pointer), "Error creating swap chain");
 			this.handle = pointer.get(0);
 			
-			ImageView[] views = this.getImageViews(stack, extent, format.imageFormat());
+			ImageView[] views = this.getImageViews(stack, extent, IVkType.byInt(format.left(), Format.values()));
 			
 			for(int i = 0; i < views.length; i++) {
-				this.frames[i].withColor(new SwapchainAttachment(views[i]));
+				this.frames[i].withColor(new VkAttachment(views[i]));
 			}
 			
 			this.withDepth(1, ImageLayout.DEPTH_STENCIL_OPTIMAL, Format.D24_UNORM_S8_UINT, ViewType.TYPE_2D);
 		}
+		
+		this.available = Driver.createDeviceSync();
 	}
 
 	@Override
@@ -125,12 +123,10 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 	@Override
 	public boolean acquire() {
 		try(MemoryStack stack = stackPush()) {
-			Frame frame = this.frames[this.frameIndex];
-			
 			boolean resize = false;
 			
 			IntBuffer pointer = stack.mallocInt(1);
-			int err = vkAcquireNextImageKHR(this.device.get(), this.handle, ~0L, frame.getAvailable().asLong(), 0L, pointer);
+			int err = vkAcquireNextImageKHR(this.device.get(), this.handle, ~0L, this.available.asLong(), 0L, pointer);
 			if(err == VK_ERROR_OUT_OF_DATE_KHR) {
 				resize = true;
 			} else if(err != VK_SUBOPTIMAL_KHR && err != VK_SUCCESS) {
@@ -168,7 +164,12 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 	}
 
 	@Override
-	public ISwapchain makeChild() {
+	public IDeviceSync getAvailable() {
+		return this.available;
+	}
+
+	@Override
+	public ISwapchain copy() {
 		return new VkSwapchain(this);
 	}
 	
@@ -189,7 +190,11 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 
 		//TODO make SampleCount configurable
 		for(int i = 0; i < imgCount; i++) {
-			images[i] = builder.image(new VkImage(this.device, ImageType.TYPE_2D, format, 1, SampleCount.COUNT_1, 1, new ImageUsage[] { ImageUsage.COLOR }, extent.width(), extent.height(), 0, imagePointers.get(i))).build(this.device);
+			images[i] = builder.image(new VkImage(this.device, ImageType.TYPE_2D, format, 1, SampleCount.COUNT_1, 1, new ImageUsage[] { ImageUsage.COLOR }, extent.width(), extent.height(), 0, imagePointers.get(i)) {
+				@Override
+				public void free() {					
+				}
+			}).build(this.device);
 		}
 		return images;
 	}
@@ -204,6 +209,8 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 		super.free();
 
 		vkDestroySwapchainKHR(this.device.get(), this.handle, null);
+		
+		this.available.free();
 	}
 	
 	private VkExtent2D getSwapChainExtent(MemoryStack stack, VkSurfaceCapabilitiesKHR surfaceCaps) {
@@ -228,7 +235,7 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 		return res;
 	}
 	
-	private SurfaceFormat getSurfaceFormat(PhysicalDevice device) {
+	private IPair<Integer, Integer> getSurfaceFormat(PhysicalDevice device) {
 		try(MemoryStack stack = stackPush()) {
 			VkPhysicalDevice physicalDevice = device.get();
 			long surfaceHandle = this.surface.asLong();
@@ -250,30 +257,14 @@ class VkSwapchain extends VkFramebuffer implements ISwapchain {
 				int imgColorSpace = format.colorSpace();
 				
 				if(imgF == VK_FORMAT_B8G8R8A8_SRGB && imgColorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-					return new SurfaceFormat(IVkType.byInt(imgF, Format.values()), imgColorSpace);
+					return IPair.of(imgF, imgColorSpace);
 				}
 			}
-			
-			return new SurfaceFormat(Format.B8G8R8A8_SRGB, formats.get(0).colorSpace());
+			return IPair.of(Format.B8G8R8A8_SRGB.getVkType(), formats.get(0).colorSpace());
 		}
 	}
 	
 	private int getFrameCount(VkSurfaceCapabilitiesKHR capabilities) {
-		int maxFrameCount = capabilities.maxImageCount();
-		return maxFrameCount != 0 ? Math.min(this.frameCount, maxFrameCount) : capabilities.minImageCount();
-	}
-	
-	record SurfaceFormat(Format imageFormat, int colorSpace) {}
-	
-	class SwapchainAttachment extends VkAttachment {
-
-		public SwapchainAttachment(ImageView imageView) {
-			super(imageView);
-		}
-
-		@Override
-		public void free() {
-			this.imageView.free();
-		}
+		return Mathi.clamp(capabilities.minImageCount(), capabilities.maxImageCount(), this.frameCount);
 	}
 }

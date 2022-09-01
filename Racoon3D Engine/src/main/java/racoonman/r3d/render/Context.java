@@ -1,25 +1,24 @@
 package racoonman.r3d.render;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import com.google.common.collect.Lists;
-
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
+import racoonman.r3d.render.api.objects.IDeviceSync;
 import racoonman.r3d.render.api.objects.IFramebuffer;
-import racoonman.r3d.render.api.objects.IContextSync;
+import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.api.objects.RenderPass;
 import racoonman.r3d.render.api.sync.LocalSync;
 import racoonman.r3d.render.api.types.ColorComponent;
 import racoonman.r3d.render.api.types.CullMode;
 import racoonman.r3d.render.api.types.FrontFace;
+import racoonman.r3d.render.api.types.Mode;
 import racoonman.r3d.render.api.types.PolygonMode;
 import racoonman.r3d.render.api.types.SampleCount;
 import racoonman.r3d.render.api.types.Stage;
-import racoonman.r3d.render.api.types.Topology;
+import racoonman.r3d.render.compute.Compute;
 import racoonman.r3d.render.config.Config;
 import racoonman.r3d.render.matrix.IMatrixType;
 import racoonman.r3d.render.matrix.MatrixStackImpl;
@@ -36,9 +35,9 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 	protected State<Float> lineWidth;
 	protected State<Viewport> viewport;
 	protected State<Scissor> scissor;
-	protected ListState<IPair<VertexFormat, IDeviceBuffer>> vertexBuffers;
+	protected State<List<IPair<VertexFormat, IDeviceBuffer>>> vertexBuffers;
 	protected State<IDeviceBuffer> indexBuffer;
-	protected State<Topology> topology;
+	protected State<Mode> mode;
 	protected State<SampleCount> sampleCount;
 	protected State<ColorComponent[]> writeMask;
 	protected State<PolygonMode> polygonMode;
@@ -52,9 +51,9 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 		this.lineWidth = new State<>(1.0F);
 		this.viewport = new State<>(new Viewport(0, 0, 0, 0, 0.0F, 1.0F));
 		this.scissor = new State<>(new Scissor(0, 0, 0, 0));
-		this.vertexBuffers = new ListState<>();
+		this.vertexBuffers = new State<>();
 		this.indexBuffer = new State<>();
-		this.topology = new State<>(Topology.TRIANGLE_LIST);
+		this.mode = new State<>(Mode.TRIANGLE_LIST);
 		this.sampleCount = new State<>(SampleCount.COUNT_1);
 		this.writeMask = new State<>(ColorComponent.values());
 		this.polygonMode = new State<>(PolygonMode.FILL);
@@ -62,19 +61,24 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 		this.pass = Optional.empty();
 	}
 
-	public RenderPass beginPass(IFramebuffer framebuffer) {
+	public RenderPass begin(IFramebuffer framebuffer) {
 		this.setViewport(framebuffer.getViewport(0.0F, 1.0F));
 		this.setScissor(framebuffer.getScissor());
-		return this.createPass(framebuffer);
+
+		RenderPass pass = this.createPass(framebuffer);
+		pass.begin();
+		return pass;
 	}
 	
 	public abstract RenderPass createPass(IFramebuffer framebuffer);
-
-	public abstract void alert(IContextSync... syncs);
 	
-	public abstract void sync(IContextSync syncs, Stage stage);
+	public abstract void alert(IDeviceSync... syncs);
 	
-	public abstract void sync(LocalSync localSync);
+	public abstract void await(IDeviceSync sync, Stage stage);
+	
+	public abstract void await(LocalSync sync);
+	
+	public abstract Compute dispatch(IShader shader, int xThreads, int yThreads, int zThreads);
 	
 	@Override
 	public IShaderProgram getProgram() {
@@ -102,8 +106,8 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 	}
 
 	@Override
-	public Topology getTopology() {
-		return this.topology.getValue();
+	public Mode getMode() {
+		return this.mode.getValue();
 	}
 
 	@Override
@@ -169,8 +173,8 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 	}
 
 	@Override
-	public void setTopology(Topology topology) {
-		this.topology.set(topology);
+	public void setTopology(Mode topology) {
+		this.mode.set(topology);
 		this.updateState();
 	}
 
@@ -198,96 +202,13 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 		this.updateState();
 	}
 	
-	public RenderPass begin(IFramebuffer framebuffer) {
-		return this.begin(framebuffer, 0.0F, 0.0F, 0.0F, 1.0F);
-	}
-	
-	public RenderPass begin(IFramebuffer framebuffer, float clearR, float clearG, float clearB, float clearA) {
-		RenderPass pass = this.beginPass(framebuffer);
-		pass.clear(clearR, clearG, clearB, clearA);
-		pass.begin();
-		return pass;
-	}
-	
+	protected abstract void submit();
 	
 	protected abstract void updateState();
-
-	public abstract void submit();
 	
 	@Override
 	public void close() {
 		this.submit();
-	}
-	
-	//TODO remove
-	public static class ListState<T> {
-		private List<T> values;
-		private boolean updated;
-
-		public ListState() {
-			this.values = new ArrayList<>();
-		}
-		
-		public ListState(T[] initialValues) {
-			this.values = Lists.newArrayList(initialValues);
-		}
-		
-		public boolean set(List<T> values) {
-			if(this.values.hashCode() != values.hashCode()) {
-				this.values.clear();
-				this.values.addAll(values);
-				this.updated = true;
-			}
-			
-			return this.updated;
-		}
-		
-		public boolean set(T[] values) {
-			boolean changed = values.length != this.values.size();
-			
-			if(!changed) {
-				for(int i = 0; i < values.length; i++) {
-					if(this.values.get(i) != values[i]) {
-						changed = true;
-						break;
-					}
-				}
-			}
-			
-			if(changed) {
-				this.values.clear();
-				for(T t : values) {
-					this.values.add(t);
-				}
-				this.updated = true;
-			}
-			
-			return this.updated;
-		}
-		
-		public List<T> getValues() {
-			return this.values;
-		}
-		
-		public void applyChanges(Consumer<List<T>> consumer) {
-			if(this.updated) {
-				if(!this.values.isEmpty()) {
-					consumer.accept(this.values);
-				}
-				
-				this.updated = false;
-			}
-		}
-		
-		public boolean exists() {
-			return this.values.isEmpty();
-		}
-		
-		public void check(String name) {
-			if(!this.exists()) {
-				throw new IllegalStateException("Required state [" + name + "] is not bound");
-			}
-		}
 	}
 	
 	public static class State<T> {
@@ -316,10 +237,10 @@ public abstract class Context extends MatrixStackImpl implements AutoCloseable, 
 		
 		public void setAndApply(T value, Consumer<T> consumer) {
 			this.set(value);
-			this.applyChanges(consumer);
+			this.update(consumer);
 		}
 		
-		public void applyChanges(Consumer<T> consumer) {
+		public void update(Consumer<T> consumer) {
 			if(this.updated) {
 				consumer.accept(this.value);
 				this.updated = false;

@@ -20,11 +20,7 @@ public interface IPair<L, R> {
 			
 			@Override
 			public boolean equals(Object o) {
-				if(o instanceof IPair<?, ?> p) {
-					return p.left().equals(left) && p.right().equals(right);
-				} else {
-					return false;
-				}
+				return o instanceof IPair<?, ?> p && p.left().equals(this.left()) && p.right().equals(this.right());
 			}
 		};
 	}

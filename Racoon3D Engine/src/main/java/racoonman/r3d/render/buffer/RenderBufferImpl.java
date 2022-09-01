@@ -66,7 +66,7 @@ public class RenderBufferImpl implements IRenderBuffer {
 	}
 
 	@Override
-	public IRenderBuffer withBuffer(VertexFormat format, IDeviceBuffer buffer) {
+	public IRenderBuffer attach(VertexFormat format, IDeviceBuffer buffer) {
 		this.vertexBuffers.add(IPair.of(format, buffer));
 		return this;
 	}

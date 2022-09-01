@@ -6,16 +6,16 @@ import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.api.types.ColorComponent;
 import racoonman.r3d.render.api.types.CullMode;
 import racoonman.r3d.render.api.types.FrontFace;
+import racoonman.r3d.render.api.types.Mode;
 import racoonman.r3d.render.api.types.PolygonMode;
 import racoonman.r3d.render.api.types.SampleCount;
-import racoonman.r3d.render.api.types.Topology;
 import racoonman.r3d.util.OptionalFloat;
 
 public class DrawState {
 	private Optional<IShaderProgram> program;
 	private Optional<CullMode> cullMode;
 	private OptionalFloat lineWidth;
-	private Optional<Topology> topology;
+	private Optional<Mode> mode;
 	private Optional<SampleCount> sampleCount;
 	private Optional<ColorComponent[]> writeMask;
 	private Optional<PolygonMode> polygonMode;
@@ -25,49 +25,49 @@ public class DrawState {
 		this.program = Optional.empty();
 		this.cullMode = Optional.empty();
 		this.lineWidth = OptionalFloat.empty();
-		this.topology = Optional.empty();
+		this.mode = Optional.empty();
 		this.sampleCount = Optional.empty();
 		this.writeMask = Optional.empty();
 		this.polygonMode = Optional.empty();
 		this.frontFace = Optional.empty();
 	}
 	
-	public DrawState withProgram(IShaderProgram program) {
+	public DrawState setProgram(IShaderProgram program) {
 		this.program = Optional.of(program);
 		return this;
 	}
 	
-	public DrawState withCullMode(CullMode cullMode) {
+	public DrawState setCullMode(CullMode cullMode) {
 		this.cullMode = Optional.of(cullMode);
 		return this;
 	}
 	
-	public DrawState withLineWidth(float width) {
+	public DrawState setLineWidth(float width) {
 		this.lineWidth = OptionalFloat.of(width);
 		return this;
 	}
 	
-	public DrawState withTopology(Topology topology) {
-		this.topology = Optional.of(topology);
+	public DrawState setMode(Mode topology) {
+		this.mode = Optional.of(topology);
 		return this;
 	}
 	
-	public DrawState withSamples(SampleCount samples) {
+	public DrawState setSamples(SampleCount samples) {
 		this.sampleCount = Optional.of(samples);
 		return this;
 	}
 	
-	public DrawState withWriteMask(ColorComponent... mask) {
+	public DrawState setWriteMask(ColorComponent... mask) {
 		this.writeMask = Optional.of(mask);
 		return this;
 	}
 	
-	public DrawState withPolygonMode(PolygonMode mode) {
+	public DrawState setPolygonMode(PolygonMode mode) {
 		this.polygonMode = Optional.of(mode);
 		return this;
 	}
 	
-	public DrawState withFrontFace(FrontFace face) {
+	public DrawState setFrontFace(FrontFace face) {
 		this.frontFace = Optional.of(face);
 		return this;
 	}
@@ -76,7 +76,7 @@ public class DrawState {
 		this.program.ifPresent(state::bindProgram);
 		this.cullMode.ifPresent(state::setCullMode);
 		this.lineWidth.ifPresent(state::setLineWidth);
-		this.topology.ifPresent(state::setTopology);
+		this.mode.ifPresent(state::setTopology);
 		this.sampleCount.ifPresent(state::setSamples);
 		this.writeMask.ifPresent(state::setWriteMask);
 		this.polygonMode.ifPresent(state::setPolygonMode);
@@ -85,12 +85,12 @@ public class DrawState {
 	
 	public static DrawState getDefault() {
 		return new DrawState()
-			.withCullMode(CullMode.BACK)
-			.withLineWidth(1.0F)
-			.withTopology(Topology.TRIANGLE_LIST)
-			.withSamples(SampleCount.COUNT_1)
-			.withWriteMask(ColorComponent.values())
-			.withPolygonMode(PolygonMode.FILL)
-			.withFrontFace(FrontFace.CW);
+			.setCullMode(CullMode.BACK)
+			.setLineWidth(1.0F)
+			.setMode(Mode.TRIANGLE_LIST)
+			.setSamples(SampleCount.COUNT_1)
+			.setWriteMask(ColorComponent.values())
+			.setPolygonMode(PolygonMode.FILL)
+			.setFrontFace(FrontFace.CW);
 	}
 }
