@@ -9,9 +9,9 @@ import racoonman.r3d.render.api.objects.IShaderProgram;
 import racoonman.r3d.render.api.types.ColorComponent;
 import racoonman.r3d.render.api.types.CullMode;
 import racoonman.r3d.render.api.types.FrontFace;
+import racoonman.r3d.render.api.types.Mode;
 import racoonman.r3d.render.api.types.PolygonMode;
 import racoonman.r3d.render.api.types.SampleCount;
-import racoonman.r3d.render.api.types.Topology;
 import racoonman.r3d.render.matrix.IMatrixStack;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.util.IPair;
@@ -27,7 +27,7 @@ public interface IState extends IMatrixStack {
 	
 	Scissor getScissor();
 	
-	Topology getTopology();
+	Mode getMode();
 	
 	SampleCount getSampleCount();
 	
@@ -51,7 +51,7 @@ public interface IState extends IMatrixStack {
 
 	void bindIndexBuffer(IDeviceBuffer indexBuffer);
 	
-	void setTopology(Topology topology);
+	void setTopology(Mode topology);
 	
 	void setSamples(SampleCount sampleCount);
 	

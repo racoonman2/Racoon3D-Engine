@@ -48,10 +48,6 @@ public interface IWindow extends IHandle {
 	
 	void setIcon(NativeImage image);
 	
-	default void swapBuffers() {
-		this.getSwapchain().present();
-	}
-	
 	boolean isOpen();
 	
 	default void toggleFullscreen() {

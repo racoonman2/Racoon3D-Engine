@@ -88,7 +88,7 @@ class VkAttachment implements IAttachment {
 	}
 	
 	@Override
-	public IAttachment makeChild(int newWidth, int newHeight) {
+	public IAttachment copy(int newWidth, int newHeight) {
 		return new VkAttachment(newWidth, newHeight, this.layers, this.format, this.viewType, this.usage, this.state.copy(), this.device);
 	}
 

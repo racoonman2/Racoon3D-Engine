@@ -9,50 +9,50 @@ import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_initialize;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_auto_bind_uniforms;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_auto_map_locations;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_include_callbacks;
-import static org.lwjgl.util.shaderc.Shaderc.shaderc_compile_options_set_target_env;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compiler_initialize;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_compiler_release;
-import static org.lwjgl.util.shaderc.Shaderc.shaderc_env_version_vulkan_1_3;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_get_bytes;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_get_compilation_status;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_get_error_message;
 import static org.lwjgl.util.shaderc.Shaderc.shaderc_result_release;
-import static org.lwjgl.util.shaderc.Shaderc.shaderc_target_env_vulkan;
 
 import java.nio.ByteBuffer;
 
 import org.lwjgl.util.shaderc.ShadercIncludeResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.github.douira.glsl_transformer.ast.query.Root;
-import io.github.douira.glsl_transformer.ast.transform.ASTTransformer;
+import io.github.douira.glsl_transformer.ast.transform.SingleASTTransformer;
 import racoonman.r3d.render.natives.IHandle;
 import racoonman.r3d.render.shader.parsing.IShaderProcessor;
 import racoonman.r3d.resource.io.ClassPathReader;
 import racoonman.r3d.util.Util;
 
+//ha ha bad code
 public class ShaderCompiler implements IHandle {
+	private static final Logger LOGGER = LoggerFactory.getLogger(ShaderCompiler.class);
 	private long handle;
 	private IShaderProcessor processor;
 	private Options options;
-	private ASTTransformer<?> transformer;
+	private SingleASTTransformer<?> transformer;
 	
 	public ShaderCompiler(IShaderProcessor processor) {
 		this.handle = shaderc_compiler_initialize();
 		this.processor = processor;
 		this.options = new Options();
-		this.transformer = new ASTTransformer<>();
-		shaderc_compile_options_set_target_env(this.options.asLong(), shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
+		this.transformer = new SingleASTTransformer<>();
 	}
 
 	public Result compile(String srcCode, ShaderStage stage, String name, String entryPoint, String... args) {
 		for (String arg : args) {
-			arg = arg.replace("-D", "");
-			String[] split = arg.split("=");
+			String a = arg.replace("-D", "");
+			String[] split = a.split("=");
 
 			if (split.length >= 2) {
 				this.options.define(split[0], split[1]);
 			} else {
-				throw new RuntimeException("Shader argument [" + arg + "] is formatted incorrectly");
+				LOGGER.error("Shader argument {} is formatted wrong, shader may not compile", arg);
 			}
 		}
 
@@ -69,7 +69,7 @@ public class ShaderCompiler implements IHandle {
 		});
 		
 		String transformedCode = this.transformer.transform(processedCode);
-		System.out.println(transformedCode);
+		//System.out.println(transformedCode);
 		Result result = new Result(stage, name, shaderc_compile_into_spv(this.handle, transformedCode, stage.getShadercType(), name, entryPoint, this.options.asLong()));
 		result.check();
 		return result;

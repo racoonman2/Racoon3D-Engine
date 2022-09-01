@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.types.BlendFactor;
 import racoonman.r3d.render.api.types.BlendOp;
@@ -30,27 +33,29 @@ import racoonman.r3d.render.api.vulkan.GraphicsPipeline.ViewportInfo;
 import racoonman.r3d.render.api.vulkan.PipelineLayout.PushConstantRange;
 import racoonman.r3d.render.shader.ShaderStage;
 
-class RenderCache {
+class GraphicsCache {
+	private static final Logger LOGGER = LoggerFactory.getLogger(GraphicsCache.class);
 	private Device device;
-	private Map<PipelineState, IPipeline> pipelines;
+	private Map<GraphicsState, GraphicsPipeline> pipelines;
 	
-	public RenderCache(Device device) {
+	public GraphicsCache(Device device) {
 		this.device = device;
-		this.pipelines = new TreeMap<>(PipelineState.COMPARATOR);
+		this.pipelines = new TreeMap<>(GraphicsState.COMPARATOR);
 	}
 	
-	public Optional<IPipeline> get(PipelineState state) {
-		return state.isValid() ? Optional.of(this.pipelines.computeIfAbsent(state, (s) -> {
+	public Optional<GraphicsPipeline> getPipeline(GraphicsState state) {
+		return state.isValid() ? Optional.of(this.pipelines.computeIfAbsent(state, (k) -> {
+			LOGGER.info("Auto generated graphics pipeline with state [{}]", state);
 			return new GraphicsPipeline(this.device, 
-				s.program(), 
-				new VertexInfo(s.formats()),
-				new AssemblyInfo(s.topology()),
+				state.program(), 
+				new VertexInfo(state.formats()),
+				new AssemblyInfo(state.mode()),
 				new ViewportInfo(1, 1),
-				new RasterizationInfo(s.polygonMode(), s.cullMode(), s.lineWidth(), s.frontFace()), 
-				new MultisampleInfo(s.sampleCount()),
+				new RasterizationInfo(state.polygonMode(), state.cullMode(), state.lineWidth(), state.frontFace()), 
+				new MultisampleInfo(state.sampleCount()),
 				new BlendStateInfo[] {
 					new BlendStateInfo(
-						IVkType.bitMask(s.writeMask()), 
+						IVkType.bitMask(state.writeMask()), 
 						false, 
 						BlendOp.ADD, 
 						BlendFactor.ONE_MINUS_SRC_COLOR, 
@@ -64,7 +69,7 @@ class RenderCache {
 				new DynamicStateInfo(new int[] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR }),
 				Optional.of(new DepthStencilInfo(true, true, CompareOp.LESS, false, false)),
 				Optional.empty(), 
-				new RenderingInfo(s.framebuffer().getColorAttachments().stream().map(IAttachment::getFormat).toArray(Format[]::new), Format.D24_UNORM_S8_UINT, Format.D24_UNORM_S8_UINT), 
+				new RenderingInfo(state.framebuffer().getColorAttachments().stream().map(IAttachment::getFormat).toArray(Format[]::new), Format.D24_UNORM_S8_UINT, Format.D24_UNORM_S8_UINT), 
 				new PipelineLayout(this.device,
 					new DescriptorSetLayout[] {
 						new DescriptorSetLayout(this.device, VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR, 

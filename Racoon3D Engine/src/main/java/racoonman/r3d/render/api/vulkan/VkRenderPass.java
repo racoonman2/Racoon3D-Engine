@@ -5,12 +5,15 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import java.util.List;
 
 import org.lwjgl.system.MemoryStack;
+import org.lwjgl.vulkan.VkClearAttachment;
+import org.lwjgl.vulkan.VkClearRect;
 import org.lwjgl.vulkan.VkRenderingAttachmentInfo;
 import org.lwjgl.vulkan.VkRenderingInfo;
 
 import racoonman.r3d.render.api.objects.IAttachment;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.RenderPass;
+import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.api.types.ImageLayout;
 import racoonman.r3d.render.api.types.LoadOp;
 import racoonman.r3d.render.api.types.StoreOp;
@@ -25,7 +28,6 @@ class VkRenderPass extends RenderPass {
 		this.context = context;
 		this.cmdBuffer = cmdBuffer;
 		this.framebuffer = framebuffer;
-		this.framebuffer.onRenderStart(context);
 	}
 
 	@Override
@@ -61,10 +63,10 @@ class VkRenderPass extends RenderPass {
 						.imageLayout(ImageLayout.COLOR_OPTIMAL.getVkType())
 						.clearValue((val) -> val
 							.color((col) -> col
-								.float32(0, this.clear.x)
-								.float32(1, this.clear.y)
-								.float32(2, this.clear.z)
-								.float32(3, this.clear.w)));
+								.float32(0, 0.0F)
+								.float32(1, 0.0F)
+								.float32(2, 0.0F)
+								.float32(3, 1.0F)));
 			}
 				
 			renderingInfo.pColorAttachments(colorInfo);
@@ -104,5 +106,37 @@ class VkRenderPass extends RenderPass {
 	@Override
 	public IFramebuffer getFramebuffer() {
 		return this.framebuffer;
+	}
+
+	@Override
+	public void clear(float r, float g, float b, float a) {
+		try(MemoryStack stack = stackPush()) {
+			List<IAttachment> colors = this.framebuffer.getColorAttachments();
+			VkClearAttachment.Buffer attachments = VkClearAttachment.calloc(colors.size(), stack);
+			
+			for(int i = 0; i < colors.size(); i++) {
+				attachments.get(i)
+					.aspectMask(IVkType.bitMask(VkUtils.getAspect(colors.get(i).getUsage())))
+					.clearValue((clear) -> clear
+						.color((color) -> color
+							.float32(0, r)
+							.float32(1, g)
+							.float32(2, b)
+							.float32(3, a)));
+			}
+			
+			VkClearRect.Buffer rects = VkClearRect.calloc(colors.size(), stack);
+			for(int i = 0; i < colors.size(); i++) {
+				IAttachment color = colors.get(i);
+				rects.get(i)
+					.layerCount(color.getLayerCount())
+					.rect((rect) -> rect
+						.extent((extent) -> extent
+							.width(color.getWidth())
+							.height(color.getHeight())));
+			}
+			
+			this.cmdBuffer.clear(attachments, rects);
+		}
 	}
 }

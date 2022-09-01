@@ -2,17 +2,15 @@ package racoonman.r3d.render.api.objects;
 
 import java.util.List;
 
-import org.joml.Vector4f;
-
 import racoonman.r3d.render.Context;
 import racoonman.r3d.render.Scissor;
 import racoonman.r3d.render.Viewport;
 import racoonman.r3d.render.api.types.ColorComponent;
 import racoonman.r3d.render.api.types.CullMode;
 import racoonman.r3d.render.api.types.FrontFace;
+import racoonman.r3d.render.api.types.Mode;
 import racoonman.r3d.render.api.types.PolygonMode;
 import racoonman.r3d.render.api.types.SampleCount;
-import racoonman.r3d.render.api.types.Topology;
 import racoonman.r3d.render.matrix.IMatrixType;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.state.IState;
@@ -23,11 +21,9 @@ import racoonman.r3d.util.IPair;
 //TODO pass dependent states
 public abstract class RenderPass implements AutoCloseable, IState, IMemoryCopier {
 	protected Context context;
-	protected Vector4f clear;
 	
 	public RenderPass(Context context) {
 		this.context = context;
-		this.clear = new Vector4f();
 	}
 	
 	public abstract void begin();
@@ -40,9 +36,7 @@ public abstract class RenderPass implements AutoCloseable, IState, IMemoryCopier
 
 	public abstract void drawIndexed(int instanceCount, int vertexStart, int indexStart, int amount);
 	
-	public void clear(float r, float g, float b, float a) {
-		this.clear.set(r, g, b, a);
-	}
+	public abstract void clear(float r, float g, float b, float a);
 	
 	public void clear(int r, int g, int b, int a) {
 		this.clear(Color.normalize(r), Color.normalize(g), Color.normalize(b), Color.normalize(a));
@@ -94,8 +88,8 @@ public abstract class RenderPass implements AutoCloseable, IState, IMemoryCopier
 	}
 
 	@Override
-	public Topology getTopology() {
-		return this.context.getTopology();
+	public Mode getMode() {
+		return this.context.getMode();
 	}
 
 	@Override
@@ -154,7 +148,7 @@ public abstract class RenderPass implements AutoCloseable, IState, IMemoryCopier
 	}
 
 	@Override
-	public void setTopology(Topology topology) {
+	public void setTopology(Mode topology) {
 		this.context.setTopology(topology);
 	}
 

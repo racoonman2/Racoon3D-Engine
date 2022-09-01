@@ -23,14 +23,14 @@ public interface IRenderBuffer {
 
 	void free();
 
-	default IRenderBuffer withBuffer(VertexFormat format, long size, Type type) {
-		return this.withBuffer(format, Allocation.ofSize(size)
+	default IRenderBuffer attach(VertexFormat format, long size, Type type) {
+		return this.attach(format, Allocation.ofSize(size)
 			.withProperties(type.getProperties())
 			.withUsage(ArrayUtil.add(type.getUsage(), BufferUsage.VERTEX_BUFFER))
 			.allocate());
 	}
 	
-	IRenderBuffer withBuffer(VertexFormat format, IDeviceBuffer buffer);
+	IRenderBuffer attach(VertexFormat format, IDeviceBuffer buffer);
 	
 	List<IPair<VertexFormat, IDeviceBuffer>> getVertexBuffers();
 	
@@ -38,11 +38,11 @@ public interface IRenderBuffer {
 		return Optional.empty();
 	}
 	
-	public static IRenderBuffer withSize() {
+	public static IRenderBuffer of() {
 		return new RenderBufferImpl();
 	}
 	
-	public static IRenderBuffer withSize(long indexSize, Type type) {
+	public static IRenderBuffer sized(long indexSize, Type type) {
 		return new IndexedRenderBuffer(Allocation.ofSize(indexSize)
 			.withProperties(type.getProperties())
 			.withUsage(ArrayUtil.add(type.getUsage(), BufferUsage.INDEX_BUFFER))

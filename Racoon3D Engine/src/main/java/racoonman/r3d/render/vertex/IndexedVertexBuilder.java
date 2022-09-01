@@ -62,14 +62,15 @@ public class IndexedVertexBuilder extends VertexBuilderImpl implements IIndexedB
 			return EmptyRenderBuffer.INSTANCE;
 		}
 
-		IRenderBuffer renderBuffer = IRenderBuffer.withSize(this.indices.get().rewind().limit(), Type.STATIC);
+		IRenderBuffer renderBuffer = IRenderBuffer.sized(this.indices.get().rewind().limit(), Type.STATIC);
 		
 		for(VertexBuffer buffer : this.vertexBuffers) {
 			ByteBuffer data = buffer.data.get()
 				.rewind();
 			
-			renderBuffer.withBuffer(buffer.format, data.limit(), Type.STATIC);
+			renderBuffer.attach(buffer.format, data.limit(), Type.STATIC);
 		}
+		
 		this.finish(uploader, renderBuffer);
 		return renderBuffer;
 	}

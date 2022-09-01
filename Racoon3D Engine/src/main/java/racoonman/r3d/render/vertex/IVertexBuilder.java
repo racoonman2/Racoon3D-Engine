@@ -7,17 +7,16 @@ import org.joml.Vector3f;
 import org.joml.Vector4i;
 
 import racoonman.r3d.render.buffer.IRenderBuffer;
-import racoonman.r3d.render.core.Driver;
 import racoonman.r3d.render.memory.IMemoryCopier;
 import racoonman.r3d.render.util.Color;
 import racoonman.r3d.render.vertex.VertexFormat.Attribute;
 
 public interface IVertexBuilder extends AutoCloseable {
-	default IVertexBuilder withBuffer(VertexFormat format) {
-		return this.withBuffer(format, 0);
+	default IVertexBuilder attach(VertexFormat format) {
+		return this.attach(format, 0);
 	}
 	
-	IVertexBuilder withBuffer(VertexFormat format, int size);
+	IVertexBuilder attach(VertexFormat format, int size);
 	
 	IVertexBuilder floats(Attribute attribute, float... floats);
 
@@ -41,10 +40,6 @@ public interface IVertexBuilder extends AutoCloseable {
 	
 	Matrix4f getTransform();
 
-	default void finish(IRenderBuffer target) {
-		this.finish(Driver.getMemoryCopier(), target);
-	}
-	
 	void finish(IMemoryCopier uploader, IRenderBuffer target);
 
 	@Override
@@ -53,10 +48,6 @@ public interface IVertexBuilder extends AutoCloseable {
 	}
 	
 	void free();
-	
-	default IRenderBuffer finish() {
-		return this.finish(Driver.getMemoryCopier());
-	}
 	
 	IRenderBuffer finish(IMemoryCopier uploader);
 
@@ -160,10 +151,10 @@ public interface IVertexBuilder extends AutoCloseable {
 	}
 
 	public static IIndexedBuilder indexed(IVertexOrder vertexOrder) {
-		return indexed(0, vertexOrder);
+		return sized(0, vertexOrder);
 	}
 	
-	public static IIndexedBuilder indexed(int indiceSize, IVertexOrder vertexOrder) {
+	public static IIndexedBuilder sized(int indiceSize, IVertexOrder vertexOrder) {
 		return new IndexedVertexBuilder(vertexOrder, indiceSize);
 	}
 	

@@ -1,12 +1,11 @@
 package racoonman.r3d.render.api.vulkan;
 
 import static org.lwjgl.system.MemoryStack.stackPush;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-import static org.lwjgl.vulkan.VK10.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 import static org.lwjgl.vulkan.VK10.VK_MAX_MEMORY_TYPES;
 import static org.lwjgl.vulkan.VK10.VK_SUCCESS;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkBufferCopy;
@@ -14,8 +13,8 @@ import org.lwjgl.vulkan.VkMemoryType;
 
 import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.types.Aspect;
-import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.api.types.ImageUsage;
+import racoonman.r3d.util.ArrayUtil;
 
 class VkUtils {
 	
@@ -51,22 +50,17 @@ class VkUtils {
 		}
 	}
 	
-	//TODO make this return an array
-	public static Aspect getAspect(ImageUsage... usage) {
-		Aspect aspect = null;
-		int usageType = IVkType.bitMask(usage);
+	public static Aspect[] getAspect(ImageUsage... usage) {
+		List<Aspect> aspects = new ArrayList<>();
 		
-		if((usageType & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) {
-			aspect = Aspect.COLOR;
-		} else if((usageType & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) == VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) {
-			aspect = Aspect.DEPTH;
+		if(ArrayUtil.has(usage, ImageUsage.COLOR)) {
+			aspects.add(Aspect.COLOR);
+		} else if(ArrayUtil.has(usage, ImageUsage.DEPTH_STENCIL)) {
+			aspects.add(Aspect.DEPTH);
+			aspects.add(Aspect.STENCIL);
 		}
 		
-		if(aspect == null) {
-			throw new IllegalStateException("Unable to retrieve image aspect for usage [" + Arrays.toString(usage) + "]");
-		}
-		
-		return aspect;
+		return aspects.toArray(Aspect[]::new);
 	}
 	
 	public static int getMemoryType(PhysicalDevice device, int typeBits, int reqsMask) {

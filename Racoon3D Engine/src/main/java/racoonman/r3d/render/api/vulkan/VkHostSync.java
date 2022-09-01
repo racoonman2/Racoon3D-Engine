@@ -14,15 +14,15 @@ import java.nio.LongBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.vulkan.VkFenceCreateInfo;
 
-import racoonman.r3d.render.api.objects.IFence;
+import racoonman.r3d.render.api.objects.IHostSync;
 import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.api.types.Status;
 
-class VkFence implements IFence {
+class VkHostSync implements IHostSync {
 	private Device device;
 	private long handle;
 	
-	public VkFence(Device device, boolean signaled) {
+	public VkHostSync(Device device, boolean signaled) {
 		try(MemoryStack stack = stackPush()) {
 			this.device = device;
 			

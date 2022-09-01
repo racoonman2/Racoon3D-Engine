@@ -37,8 +37,7 @@ class Sampler implements IHandle {
 	private float maxAnisotropy;
 	private long handle;
 	
-	public Sampler(Device device, Filter magFilter, Filter minFilter, AddressMode addressModeU, AddressMode addressModeV, AddressMode addressModeW, BorderColor borderColor, boolean unnormalizedCoords, 
-			boolean compareEnable, CompareOp compareOp, MipmapMode mipmapMode, float minLod, float maxLod, float mipLodBias, boolean anisotropyEnable, float maxAnisotropy) {
+	public Sampler(Device device, Filter magFilter, Filter minFilter, AddressMode addressModeU, AddressMode addressModeV, AddressMode addressModeW, BorderColor borderColor, boolean unnormalizedCoords, boolean compareEnable, CompareOp compareOp, MipmapMode mipmapMode, float minLod, float maxLod, float mipLodBias, boolean anisotropyEnable, float maxAnisotropy) {
 		try(MemoryStack stack = stackPush()) {
 			this.device = device;
 			this.magFilter = magFilter;

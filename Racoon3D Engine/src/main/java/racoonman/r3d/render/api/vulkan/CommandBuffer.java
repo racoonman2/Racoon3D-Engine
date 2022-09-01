@@ -12,6 +12,7 @@ import static org.lwjgl.vulkan.VK10.vkCmdBindPipeline;
 import static org.lwjgl.vulkan.VK10.vkCmdBindVertexBuffers;
 import static org.lwjgl.vulkan.VK10.vkCmdClearAttachments;
 import static org.lwjgl.vulkan.VK10.vkCmdCopyBuffer;
+import static org.lwjgl.vulkan.VK10.vkCmdDispatch;
 import static org.lwjgl.vulkan.VK10.vkCmdDraw;
 import static org.lwjgl.vulkan.VK10.vkCmdDrawIndexed;
 import static org.lwjgl.vulkan.VK10.vkCmdPipelineBarrier;
@@ -27,6 +28,7 @@ import static racoonman.r3d.render.api.vulkan.VkUtils.vkAssert;
 
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
+import java.util.List;
 
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
@@ -50,9 +52,9 @@ import racoonman.r3d.render.api.types.BindPoint;
 import racoonman.r3d.render.api.types.IndexType;
 import racoonman.r3d.render.api.types.Level;
 import racoonman.r3d.render.api.types.SubmitMode;
-import racoonman.r3d.render.natives.IHandle;
+import racoonman.r3d.util.IPair;
 
-class CommandBuffer implements IHandle {
+class CommandBuffer implements IDispatchableHandle<VkCommandBuffer> {
 	private CommandPool pool;
 	private SubmitMode usage;
 	private VkCommandBuffer buffer;
@@ -76,15 +78,11 @@ class CommandBuffer implements IHandle {
 		}
 	}
 
+	@Override
 	public VkCommandBuffer get() {
 		return this.buffer;
 	}
 
-	@Override
-	public long asLong() {
-		return this.buffer.address();
-	}
-	
 	public void begin() {
 		if(!this.recording) {
 			try(MemoryStack stack = stackPush()) {
@@ -122,16 +120,16 @@ class CommandBuffer implements IHandle {
 		vkCmdDraw(this.buffer, vertexCount, instanceCount, firstVertex, firstInstance);
 	}
 	
-	public void bindVertexBuffers(int firstBinding, VertexBuffer... buffers) {
+	public void bindVertexBuffers(int firstBinding, List<IPair<IDeviceBuffer, Long>> buffers) {
 		try(MemoryStack stack = stackPush()) {
-			LongBuffer bindings = stack.mallocLong(buffers.length);
-			LongBuffer offsets = stack.mallocLong(buffers.length);
+			LongBuffer bindings = stack.mallocLong(buffers.size());
+			LongBuffer offsets = stack.mallocLong(buffers.size());
 			
-			for(int i = 0; i < buffers.length; i++) {
-				VertexBuffer buffer = buffers[i];
+			for(int i = 0; i < buffers.size(); i++) {
+				IPair<IDeviceBuffer, Long> buffer = buffers.get(i);
 				
-				bindings.put(i, buffer.buffer().asLong());
-				offsets.put(i, buffer.offset());
+				bindings.put(i, buffer.left().asLong());
+				offsets.put(i, buffer.right());
 			}
 			
 			vkCmdBindVertexBuffers(this.buffer, firstBinding, bindings, offsets);
@@ -170,8 +168,8 @@ class CommandBuffer implements IHandle {
 		vkCmdCopyBuffer(this.buffer, src.asLong(), dst.asLong(), copy);
 	}
 	
-	public void bindPipeline(IPipeline pipeline) {
-		vkCmdBindPipeline(this.buffer, pipeline.getBindPoint().getVkType(), pipeline.asLong());
+	public void bindPipeline(BindPoint bindPoint, Pipeline pipeline) {
+		vkCmdBindPipeline(this.buffer, bindPoint.getVkType(), pipeline.asLong());
 	}
 	
 	public void pushDescriptor(BindPoint bindPoint, PipelineLayout layout, int set, VkWriteDescriptorSet.Buffer writes) {
@@ -182,6 +180,7 @@ class CommandBuffer implements IHandle {
 		vkCmdPushConstants(this.buffer, layout.asLong(), flags, offset, data);
 	}
 	
-	public static record VertexBuffer(IDeviceBuffer buffer, long offset) {		
+	public void dispatch(int xThreads, int yThreads, int zThreads) {
+		vkCmdDispatch(this.buffer, xThreads, yThreads, zThreads);
 	}
 }

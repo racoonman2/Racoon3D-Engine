@@ -3,8 +3,8 @@ package racoonman.r3d.render.api.objects.wrapper;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IAttachment;
+import racoonman.r3d.render.api.objects.IDeviceSync;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.api.objects.ISwapchain;
 import racoonman.r3d.render.api.objects.IWindowSurface;
@@ -27,7 +27,7 @@ public class ResizableSwapchain implements ISwapchain {
 	public int getHeight() {
 		return this.delegate.getHeight();
 	}
-
+	
 	@Override
 	public boolean acquire() {
 		boolean resized = false;
@@ -37,11 +37,6 @@ public class ResizableSwapchain implements ISwapchain {
 			this.resized = false;
 		}
 		return resized;
-	}
-
-	@Override
-	public void onRenderStart(Context context) {
-		this.delegate.onRenderStart(context);
 	}
 
 	@Override
@@ -80,14 +75,14 @@ public class ResizableSwapchain implements ISwapchain {
 	}
 	
 	@Override
-	public ISwapchain makeChild() {
-		return this.delegate.makeChild();
+	public ISwapchain copy() {
+		return this.delegate.copy();
 	}
 	
 	private void resize() {
 		if(this.isValid()) {
 			ISwapchain oldSwapchain = this.delegate;
-			this.delegate = this.delegate.makeChild();
+			this.delegate = this.delegate.copy();
 			Driver.free(oldSwapchain);
 		}
 	}
@@ -95,5 +90,15 @@ public class ResizableSwapchain implements ISwapchain {
 	@Override
 	public IWindowSurface getSurface() {
 		return this.delegate.getSurface();
+	}
+
+	@Override
+	public IDeviceSync getFinish() {
+		return this.delegate.getFinish();
+	}
+
+	@Override
+	public IDeviceSync getAvailable() {
+		return this.delegate.getAvailable();
 	}
 }

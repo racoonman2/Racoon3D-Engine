@@ -3,8 +3,8 @@ package racoonman.r3d.render.api.objects.wrapper;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.api.objects.IAttachment;
+import racoonman.r3d.render.api.objects.IDeviceSync;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 import racoonman.r3d.render.core.Driver;
 
@@ -31,11 +31,6 @@ public class Framebuffer implements IFramebuffer {
 	}
 
 	@Override
-	public void onRenderStart(Context context) {
-		this.delegate.onRenderStart(context);
-	}
-
-	@Override
 	public void free() {
 		this.delegate.free();
 	}
@@ -58,5 +53,15 @@ public class Framebuffer implements IFramebuffer {
 	@Override
 	public IFramebuffer withDepth(IAttachment attachment) {
 		return this.delegate.withDepth(attachment);
+	}
+
+	@Override
+	public long asLong() {
+		return this.delegate.asLong();
+	}
+	
+	@Override
+	public IDeviceSync getFinish() {
+		return this.delegate.getFinish();
 	}
 }

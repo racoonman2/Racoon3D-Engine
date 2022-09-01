@@ -26,9 +26,8 @@ import org.lwjgl.vulkan.VkLayerProperties;
 import com.google.common.collect.ImmutableList;
 
 import racoonman.r3d.core.util.Version;
-import racoonman.r3d.render.natives.IHandle;
 
-class Vulkan implements IHandle {
+class Vulkan implements IDispatchableHandle<VkInstance> {
 	private VkInstance instance;
 	private Version apiVersion;
 	private Version engineVersion;
@@ -88,13 +87,9 @@ class Vulkan implements IHandle {
 		return this.appName;
 	}
 	
+	@Override
 	public VkInstance get() {
 		return this.instance;
-	}
-
-	@Override
-	public long asLong() {
-		return this.instance.address();
 	}
 	
 	@Override
@@ -157,16 +152,13 @@ class Vulkan implements IHandle {
 				layers.add(layer);
 			}
 			
-			List<String> toUse = new ArrayList<>();
-			
 			if (layers.contains("VK_LAYER_KHRONOS_validation")) {
-				toUse.add("VK_LAYER_KHRONOS_validation");
-				return toUse;
+				return ImmutableList.of("VK_LAYER_KHRONOS_validation");
 			}
 
 			if (layers.contains("VK_LAYER_LUNARG_standard_validation")) {
-				toUse.add("VK_LAYER_LUNARG_standard_validation");
-				return toUse;
+				System.out.println("ads");
+				return ImmutableList.of("VK_LAYER_LUNARG_standard_validation");
 			}
 
 			List<String> requested = ImmutableList.of(

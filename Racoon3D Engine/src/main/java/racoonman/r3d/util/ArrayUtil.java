@@ -147,4 +147,130 @@ public class ArrayUtil {
 		newArray[array.length] = toAdd;
 		return newArray;
 	}
+
+	public static <T> boolean softEquals(T[] left, T[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(T t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean softEquals(float[] left, float[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(float t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
+	public static boolean softEquals(double[] left, double[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(double t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
+	public static boolean softEquals(byte[] left, byte[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(byte t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
+	public static boolean softEquals(char[] left, char[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(char t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean softEquals(short[] left, short[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(short t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+	
+	public static boolean softEquals(int[] left, int[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(int t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean softEquals(long[] left, long[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(long t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public static boolean softEquals(boolean[] left, boolean[] right) {
+		if(left.length != right.length) {
+			return false;
+		}
+		
+		for(boolean t : left) {
+			if(!has(right, t)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
 }

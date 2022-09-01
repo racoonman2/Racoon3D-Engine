@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
+import org.lwjgl.system.MemoryUtil;
+
 import racoonman.r3d.render.api.objects.IAttachment;
+import racoonman.r3d.render.api.objects.IDeviceSync;
 import racoonman.r3d.render.api.objects.IFramebuffer;
 
 abstract class VkFramebuffer implements IFramebuffer {
@@ -27,10 +29,10 @@ abstract class VkFramebuffer implements IFramebuffer {
 			}
 		}
 	}
-	
+
 	@Override
-	public void onRenderStart(Context context) {
-		context.alert(this.frames[this.frameIndex].getFinished());
+	public IDeviceSync getFinish() {
+		return this.frames[this.frameIndex].getFinished();
 	}
 	
 	@Override
@@ -47,7 +49,7 @@ abstract class VkFramebuffer implements IFramebuffer {
 	public IFramebuffer withColor(IAttachment attachment) {	
 		this.frames[0].withColor(attachment);
 		for(int i = 1; i < this.frames.length; i++) {
-			this.frames[i].withColor(attachment.makeChild());
+			this.frames[i].withColor(attachment.copy());
 		}
 		return this;
 	}
@@ -56,7 +58,7 @@ abstract class VkFramebuffer implements IFramebuffer {
 	public IFramebuffer withDepth(IAttachment attachment) {
 		this.frames[0].withDepth(attachment);
 		for(int i = 1; i < this.frames.length; i++) {
-			this.frames[i].withDepth(attachment.makeChild());
+			this.frames[i].withDepth(attachment.copy());
 		}
 		return this;
 	}
@@ -79,6 +81,11 @@ abstract class VkFramebuffer implements IFramebuffer {
 	}
 	
 	@Override
+	public long asLong() {
+		return MemoryUtil.NULL;
+	}
+	
+	@Override
 	public void free() {
 		for(Frame frame : this.frames) {
 			frame.free();
@@ -88,14 +95,12 @@ abstract class VkFramebuffer implements IFramebuffer {
 	class Frame {
 		private List<IAttachment> colorAttachments;
 		private Optional<IAttachment> depthAttachment;
-		private VkSemaphore available;
-		private VkSemaphore finished;
+		private VkDeviceSync finished;
 		
 		public Frame() {
 			this.colorAttachments = new ArrayList<>();
 			this.depthAttachment = Optional.empty();
-			this.available = new VkSemaphore(VkFramebuffer.this.device);
-			this.finished = new VkSemaphore(VkFramebuffer.this.device);
+			this.finished = new VkDeviceSync(VkFramebuffer.this.device);
 		}
 
 		public List<IAttachment> getColorAttachments() {
@@ -124,19 +129,14 @@ abstract class VkFramebuffer implements IFramebuffer {
 			return this;
 		}
 		
-		public VkSemaphore getAvailable() {
+		public VkDeviceSync getFinished() {
 			return this.finished;
-		}
-		
-		public VkSemaphore getFinished() {
-			return this.available;
 		}
 		
 		public void free() {
 			this.colorAttachments.forEach(IAttachment::free);
 			this.depthAttachment.ifPresent(IAttachment::free);
 			
-			this.available.free();
 			this.finished.free();
 		}
 	}

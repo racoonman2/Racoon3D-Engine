@@ -33,7 +33,7 @@ public class VertexBuilderImpl implements IVertexBuilder {
 	}
 
 	@Override
-	public IVertexBuilder withBuffer(VertexFormat format, int size) {
+	public IVertexBuilder attach(VertexFormat format, int size) {
 		this.vertexBuffers.add(new VertexBuffer(size, format));
 		this.currentBuffer = this.vertexBuffers.size() - 1;
 		return this;
@@ -143,13 +143,13 @@ public class VertexBuilderImpl implements IVertexBuilder {
 			return EmptyRenderBuffer.INSTANCE;
 		}
 
-		IRenderBuffer renderBuffer = IRenderBuffer.withSize();
+		IRenderBuffer renderBuffer = IRenderBuffer.of();
 		
 		for(VertexBuffer buffer : this.vertexBuffers) {
 			ByteBuffer data = buffer.data.get()
 				.rewind();
 			
-			renderBuffer.withBuffer(buffer.format, data.limit(), Type.STATIC);
+			renderBuffer.attach(buffer.format, data.limit(), Type.STATIC);
 		}
 		
 		this.finish(uploader, renderBuffer);

@@ -27,7 +27,6 @@ import org.lwjgl.vulkan.VkVertexInputBindingDescription;
 
 import racoonman.r3d.render.api.objects.IShader;
 import racoonman.r3d.render.api.objects.IShaderProgram;
-import racoonman.r3d.render.api.types.BindPoint;
 import racoonman.r3d.render.api.types.BlendFactor;
 import racoonman.r3d.render.api.types.BlendOp;
 import racoonman.r3d.render.api.types.CompareOp;
@@ -36,19 +35,17 @@ import racoonman.r3d.render.api.types.Format;
 import racoonman.r3d.render.api.types.FrontFace;
 import racoonman.r3d.render.api.types.IVkType;
 import racoonman.r3d.render.api.types.LogicOp;
+import racoonman.r3d.render.api.types.Mode;
 import racoonman.r3d.render.api.types.PolygonMode;
 import racoonman.r3d.render.api.types.SampleCount;
-import racoonman.r3d.render.api.types.Topology;
 import racoonman.r3d.render.vertex.VertexFormat;
 import racoonman.r3d.render.vertex.VertexFormat.Attribute;
 import racoonman.r3d.resource.codec.ArrayCodec;
 import racoonman.r3d.resource.codec.ICodec;
 import racoonman.r3d.resource.codec.PrimitiveCodec;
 
-class GraphicsPipeline implements IPipeline {
-	private Device device;
+class GraphicsPipeline extends Pipeline {
 	private IShaderProgram shaderProgram;
-	private PipelineLayout layout;
 	private VertexInfo vertexInfo;
 	private AssemblyInfo assemblyInfo;
 	private ViewportInfo viewportInfo;
@@ -63,8 +60,7 @@ class GraphicsPipeline implements IPipeline {
 	private long handle;
 
 	public GraphicsPipeline(Device device, IShaderProgram program, VertexInfo vertexInfo, AssemblyInfo assemblyInfo, ViewportInfo viewportInfo, RasterizationInfo rasterizationInfo, MultisampleInfo multisampleInfo, BlendStateInfo[] blendStateInfo, BlendAttachmentInfo blendAttachmentInfo, DynamicStateInfo dynamicStateInfo, Optional<DepthStencilInfo> depthStencilInfo, Optional<TessellationInfo> tessellationInfo, RenderingInfo renderingInfo, PipelineLayout layout) {
-		this.device = device;
-		this.layout = layout;
+		super(layout, device);
 		this.shaderProgram = program;
 		this.vertexInfo = vertexInfo;
 		this.assemblyInfo = assemblyInfo;
@@ -270,31 +266,14 @@ class GraphicsPipeline implements IPipeline {
 	public RenderingInfo getRenderingInfo() {
 		return this.renderingInfo;
 	}
-	
-	@Override
-	public PipelineLayout getLayout() {
-		return this.layout;
-	}
-
-	@Override
-	public BindPoint getBindPoint() {
-		return BindPoint.GRAPHICS;
-	}
-	
-	@Override
-	public Device getDevice() {
-		return this.device;
-	}
 
 	@Override
 	public long asLong() {
 		return this.handle;
 	}
 
-	//TODO remove all of these records
-	
-	public static record AssemblyInfo(Topology topology) {
-		public static final ICodec<AssemblyInfo> CODEC = ICodec.simple(Topology.ORDINAL_CODEC.fetch("topology", AssemblyInfo::topology), AssemblyInfo::new);
+	public static record AssemblyInfo(Mode topology) {
+		public static final ICodec<AssemblyInfo> CODEC = ICodec.simple(Mode.ORDINAL_CODEC.fetch("topology", AssemblyInfo::topology), AssemblyInfo::new);
 	}
 
 	public static record ViewportInfo(int viewportCount, int scissorCount) {

@@ -15,7 +15,7 @@ import static org.lwjgl.vulkan.VK10.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_AD
 import racoonman.r3d.resource.codec.EnumCodec;
 import racoonman.r3d.resource.codec.ICodec;
 
-public enum Topology implements IVkType {
+public enum Mode implements IVkType {
 	POINT_LIST(VK_PRIMITIVE_TOPOLOGY_POINT_LIST),
 	LINE_LIST(VK_PRIMITIVE_TOPOLOGY_LINE_LIST),
 	LINE_STRIP(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP),
@@ -28,12 +28,12 @@ public enum Topology implements IVkType {
 	TRIANGLE_STRIP_WITH_ADJACENCY(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY),
 	PATCH_LIST(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
 
-	public static final ICodec<Topology> ORDINAL_CODEC = EnumCodec.byOrdinal(values());
-	public static final ICodec<Topology> NAME_CODEC = EnumCodec.byName(Topology::valueOf);
+	public static final ICodec<Mode> ORDINAL_CODEC = EnumCodec.byOrdinal(values());
+	public static final ICodec<Mode> NAME_CODEC = EnumCodec.byName(Mode::valueOf);
 	
 	private int vkType;
 	
-	private Topology(int vkType) {
+	private Mode(int vkType) {
 		this.vkType = vkType;
 	}
 	

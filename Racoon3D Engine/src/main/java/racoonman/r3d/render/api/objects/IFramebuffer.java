@@ -3,7 +3,6 @@ package racoonman.r3d.render.api.objects;
 import java.util.List;
 import java.util.Optional;
 
-import racoonman.r3d.render.Context;
 import racoonman.r3d.render.Scissor;
 import racoonman.r3d.render.Viewport;
 import racoonman.r3d.render.api.types.Format;
@@ -11,17 +10,16 @@ import racoonman.r3d.render.api.types.ImageLayout;
 import racoonman.r3d.render.api.types.ImageUsage;
 import racoonman.r3d.render.api.types.ViewType;
 import racoonman.r3d.render.core.Driver;
+import racoonman.r3d.render.natives.IHandle;
 
-public interface IFramebuffer {
+public interface IFramebuffer extends IHandle {
 	int getWidth();
 	
 	int getHeight();
 	
-	boolean acquire(); //TODO remove
-	
-	void onRenderStart(Context context);
+	boolean acquire();
 
-	void free();
+	IDeviceSync getFinish();
 	
 	default IFramebuffer withColor(int layers, ImageLayout layout, Format format, ViewType viewType) {
 		return this.withColor(Driver.createAttachment(this.getWidth(), this.getHeight(), layers, layout, format, viewType, ImageUsage.COLOR));
@@ -34,7 +32,6 @@ public interface IFramebuffer {
 	List<IAttachment> getColorAttachments();
 	
 	Optional<IAttachment> getDepthAttachment();
-
 	
 	IFramebuffer withColor(IAttachment attachment);
 	

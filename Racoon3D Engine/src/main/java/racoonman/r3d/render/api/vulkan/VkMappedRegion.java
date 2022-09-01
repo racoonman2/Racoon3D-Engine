@@ -6,8 +6,8 @@ import racoonman.r3d.render.api.objects.IDeviceBuffer;
 import racoonman.r3d.render.api.objects.IMappedMemory;
 import racoonman.r3d.render.api.types.BufferUsage;
 import racoonman.r3d.render.api.types.Property;
-import racoonman.r3d.render.core.Service;
 import racoonman.r3d.render.core.Driver;
+import racoonman.r3d.render.core.Service;
 import racoonman.r3d.render.memory.Allocation;
 
 class VkMappedRegion implements IMappedMemory {

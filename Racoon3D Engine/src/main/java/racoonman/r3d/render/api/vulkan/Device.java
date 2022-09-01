@@ -19,15 +19,13 @@ import org.lwjgl.vulkan.VkPhysicalDevice;
 import org.lwjgl.vulkan.VkPhysicalDeviceFeatures2;
 import org.lwjgl.vulkan.VkQueueFamilyProperties;
 
-import racoonman.r3d.render.natives.IHandle;
-
-class Device implements IHandle {
+class Device implements IDispatchableHandle<VkDevice> {
 	private Vulkan vulkan;
 	private VkDevice device;
 	private PhysicalDevice physicalDevice;
 	private Allocator memoryAllocator;
 	
-	public Device(Vulkan vulkan, PhysicalDevice physicalDevice, IDeviceExtension...extensions) {
+	public Device(Vulkan vulkan, PhysicalDevice physicalDevice, IDeviceExtension... extensions) {
 		try(MemoryStack stack = stackPush()) {
 			this.vulkan = vulkan;
 			this.physicalDevice = physicalDevice;
@@ -85,6 +83,7 @@ class Device implements IHandle {
 		return this.physicalDevice;
 	}
 	
+	@Override
 	public VkDevice get() {
 		return this.device;
 	}
@@ -95,11 +94,6 @@ class Device implements IHandle {
 	
 	public void waitIdle() {
 		vkDeviceWaitIdle(this.device);
-	}
-	
-	@Override
-	public long asLong() {
-		return this.device.address();
 	}
 	
 	@Override
